@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 986eadabb3dc3c845bf6bc2ace117589, type: 3}
+  m_Name: SearchDockWarehouse
+  m_EditorClassIdentifier: Assembly-CSharp::LocationActionDefinition
+  actionId: search_dock_warehouse
+  displayName: Search The Warehouse Docks
+  description: Search the warehouse docks
+  move: {fileID: 11400000, guid: 9079edb302698b840b432632a2646877, type: 2}
+  strongHitText: You immediately spot the signs that someone has been living in the
+    warehouse...
+  weakHitText: You find signs that someone has been here, but while searching you
+    make enough noise to announce your presence...
+  missText: You search the warehouse but focus on all the wrong things. By the time
+    you realise you aren't alone, it's too late.
+  followUpActions:
+  - {fileID: 11400000, guid: 2f04be319deb88a4e98090a49c75a555, type: 2}
+  - {fileID: 11400000, guid: 952afce8acc7b974dbfe47b36128c80a, type: 2}
+  strongHitFollowUpActions:
+  - {fileID: 11400000, guid: eae55acdf5c87a7488e5b4adfa36a61c, type: 2}
+  - {fileID: 11400000, guid: 7167de6613b573a41a2e00872a0019b8, type: 2}
+  weakHitFollowUpActions:
+  - {fileID: 11400000, guid: 1caaeaaaeeecfb1499e9d11390065b1e, type: 2}
+  - {fileID: 11400000, guid: fe8711d0cf05fa4468fd1df71b0c7bd6, type: 2}
+  missFollowUpActions:
+  - {fileID: 11400000, guid: f8048124e17d5e04ea4faf05cf7c0c3b, type: 2}

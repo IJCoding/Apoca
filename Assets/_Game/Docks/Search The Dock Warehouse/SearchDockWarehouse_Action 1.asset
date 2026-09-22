@@ -10,11 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 986eadabb3dc3c845bf6bc2ace117589, type: 3}
-  m_Name: SearchDockWarehouse
+  m_Name: SearchDockWarehouse_Action 1
   m_EditorClassIdentifier: Assembly-CSharp::LocationActionDefinition
-  actionId: search_dock_warehouse
-  displayName: Search The Warehouse Docks
-  description: Search the warehouse docks
-  followUpActions:
-  - {fileID: 11400000, guid: 2f04be319deb88a4e98090a49c75a555, type: 2}
-  - {fileID: 11400000, guid: 952afce8acc7b974dbfe47b36128c80a, type: 2}
+  actionId: 
+  displayName: Lurk
+  description: Whatever it is knows nothing of you. You spot a good place to hide,
+    when it returns you will have the edge.
+  move: {fileID: 0}
+  strongHitText: 
+  weakHitText: 
+  missText: 
+  followUpActions: []
+  strongHitFollowUpActions: []
+  weakHitFollowUpActions: []
+  missFollowUpActions: []

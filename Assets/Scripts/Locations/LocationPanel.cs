@@ -33,6 +33,12 @@ public class LocationPanel : MonoBehaviour
     [Tooltip("The prefab used to display a location action.")]
     private LocationActionButton actionButtonPrefab;
 
+    [Header("Moves")]
+
+    [SerializeField]
+    [Tooltip("Resolves PbtA moves triggered by location actions.")]
+    private MoveResolver moveResolver;
+
     private readonly List<GameObject> generatedContent =
         new List<GameObject>();
 
@@ -80,6 +86,11 @@ public class LocationPanel : MonoBehaviour
     private void AppendNarrative(
         string text)
     {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return;
+        }
+
         NarrativeText narrativeText =
             Instantiate(
                 narrativeTextPrefab,
@@ -102,6 +113,11 @@ public class LocationPanel : MonoBehaviour
     private void CreateActionButtons(
         LocationActionDefinition[] actions)
     {
+        if (actions == null)
+        {
+            return;
+        }
+
         foreach (LocationActionDefinition action in actions)
         {
             if (action == null)
@@ -136,13 +152,97 @@ public class LocationPanel : MonoBehaviour
         AppendChoiceHistory(
             action);
 
+        if (action.RequiresMove)
+        {
+            ResolveMoveAction(
+                action);
+        }
+        else
+        {
+            ResolveNarrativeAction(
+                action);
+        }
+
+        ScrollToBottom();
+    }
+
+    private void ResolveNarrativeAction(
+        LocationActionDefinition action)
+    {
         AppendNarrative(
             action.Description);
 
         CreateActionButtons(
             action.FollowUpActions);
+    }
 
-        ScrollToBottom();
+    private void ResolveMoveAction(
+        LocationActionDefinition action)
+    {
+        if (moveResolver == null)
+        {
+            Debug.LogError(
+                $"LocationPanel cannot resolve action '{action.DisplayName}' because no MoveResolver is assigned.",
+                this);
+
+            return;
+        }
+
+        MoveDefinition move =
+            action.Move;
+
+        MoveResolution resolution =
+            moveResolver.Resolve(
+                move);
+
+        AppendMoveRoll(
+            move,
+            resolution);
+
+        AppendNarrative(
+            action.GetResultText(
+                resolution.Result));
+
+        CreateActionButtons(
+            action.GetFollowUpActions(
+                resolution.Result));
+    }
+
+    private void AppendMoveRoll(
+        MoveDefinition move,
+        MoveResolution resolution)
+    {
+        string modifierText =
+            resolution.Modifier >= 0
+                ? $"+{resolution.Modifier}"
+                : resolution.Modifier.ToString();
+
+        string rollText =
+            $"{move.DisplayName}\n" +
+            $"Roll: {resolution.DieOne} + {resolution.DieTwo} {modifierText} {move.Stat} = {resolution.Total}\n" +
+            $"{GetResultDisplayName(resolution.Result)}";
+
+        AppendNarrative(
+            rollText);
+    }
+
+    private string GetResultDisplayName(
+        MoveResult result)
+    {
+        switch (result)
+        {
+            case MoveResult.StrongHit:
+                return "Strong Hit";
+
+            case MoveResult.WeakHit:
+                return "Weak Hit";
+
+            case MoveResult.Miss:
+                return "Miss";
+
+            default:
+                return result.ToString();
+        }
     }
 
     private void ClearActionButtons()
