@@ -6,6 +6,7 @@ public class LocationActionDefinitionEditor : Editor
 {
     private SerializedProperty actionId;
     private SerializedProperty displayName;
+    private SerializedProperty approach;
     private SerializedProperty description;
     private SerializedProperty move;
 
@@ -25,6 +26,9 @@ public class LocationActionDefinitionEditor : Editor
 
         displayName =
             serializedObject.FindProperty("displayName");
+
+        approach =
+            serializedObject.FindProperty("approach");
 
         description =
             serializedObject.FindProperty("description");
@@ -97,6 +101,9 @@ public class LocationActionDefinitionEditor : Editor
 
         EditorGUILayout.PropertyField(
             displayName);
+
+        EditorGUILayout.PropertyField(
+            approach);
 
         EditorGUILayout.Space();
     }

@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LocationActionDefinition
   actionId: 
   displayName: Leave with that knowledge
+  approach: 0
   description: You leave, knowing that someone or something lives here without anyone
     the wiser
   move: {fileID: 0}

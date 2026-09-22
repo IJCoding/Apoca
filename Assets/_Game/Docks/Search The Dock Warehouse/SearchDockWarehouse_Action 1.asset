@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LocationActionDefinition
   actionId: 
   displayName: Lurk
+  approach: 4
   description: Whatever it is knows nothing of you. You spot a good place to hide,
     when it returns you will have the edge.
   move: {fileID: 0}

@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LocationActionDefinition
   actionId: 
   displayName: Call out
+  approach: 1
   description: You hear it, it hears you. Stand your ground and make you prescence
     known.
   move: {fileID: 0}

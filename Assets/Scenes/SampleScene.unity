@@ -802,6 +802,7 @@ GameObject:
   m_Component:
   - component: {fileID: 471226826}
   - component: {fileID: 471226827}
+  - component: {fileID: 471226828}
   m_Layer: 5
   m_Name: LocationPanel
   m_TagString: Untagged
@@ -849,6 +850,28 @@ MonoBehaviour:
   scrollRect: {fileID: 729445322}
   actionButtonPrefab: {fileID: -8936293028243171270, guid: 85f564da24c68d34d800994ae444b285, type: 3}
   moveResolver: {fileID: 1010165325}
+--- !u!114 &471226828
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 471226825}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e73f886ec57f82b4cb23cee345d74418, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NarrativeInputController
+  locationPanel: {fileID: 471226827}
+  valorAction: {fileID: -8002483310250000123, guid: 5853acfdb8e754e44a191d541ee95a7b, type: 3}
+  witAction: {fileID: 1095162747548170820, guid: 5853acfdb8e754e44a191d541ee95a7b, type: 3}
+  soulAction: {fileID: -3575996015364206126, guid: 5853acfdb8e754e44a191d541ee95a7b, type: 3}
+  shadowAction: {fileID: 4964423709087042050, guid: 5853acfdb8e754e44a191d541ee95a7b, type: 3}
+  fortuneAction: {fileID: 2424525708550796087, guid: 5853acfdb8e754e44a191d541ee95a7b, type: 3}
+  unalignedAction: {fileID: 3396681493189109889, guid: 5853acfdb8e754e44a191d541ee95a7b, type: 3}
+  previousAction: {fileID: 8455547337900479621, guid: 5853acfdb8e754e44a191d541ee95a7b, type: 3}
+  nextAction: {fileID: -8068144054678026670, guid: 5853acfdb8e754e44a191d541ee95a7b, type: 3}
+  confirmAction: {fileID: 5244303662804128038, guid: 5853acfdb8e754e44a191d541ee95a7b, type: 3}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0

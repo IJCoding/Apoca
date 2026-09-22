@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LocationActionDefinition
   actionId: search_dock_warehouse
   displayName: Search The Warehouse Docks
+  approach: 0
   description: Search the warehouse docks
   move: {fileID: 11400000, guid: 9079edb302698b840b432632a2646877, type: 2}
   strongHitText: You immediately spot the signs that someone has been living in the

@@ -16,6 +16,9 @@ public class LocationActionDefinition : ScriptableObject
     [Tooltip("The text displayed to the player when this action is presented as a choice.")]
     private string displayName;
 
+    [SerializeField]
+    [Tooltip("The thematic approach this action belongs to. None is used for general actions such as Leave or Continue.")]
+    private ActionApproach approach;
     [Header("Narrative")]
 
     [SerializeField]
@@ -84,6 +87,7 @@ public class LocationActionDefinition : ScriptableObject
 
     public string MissText => missText;
 
+    public ActionApproach Approach => approach;
     public LocationActionDefinition[] FollowUpActions =>
         followUpActions;
 

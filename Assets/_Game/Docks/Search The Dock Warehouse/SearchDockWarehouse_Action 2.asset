@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LocationActionDefinition
   actionId: 
   displayName: Scramble out
+  approach: 4
   description: You know something or someone is there. It may hear you leave, but
     it wont know you
   move: {fileID: 0}
