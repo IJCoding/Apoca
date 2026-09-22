@@ -1,6 +1,8 @@
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 public class LocationPanel : MonoBehaviour
@@ -11,26 +13,35 @@ public class LocationPanel : MonoBehaviour
     [Tooltip("Displays the selected location's name.")]
     private TMP_Text locationNameText;
 
+    [Header("Narrative")]
+
     [SerializeField]
-    [Tooltip("Displays the selected location's description.")]
-    private TMP_Text locationDescriptionText;
+    [Tooltip("The RectTransform that contains narrative entries and current action buttons.")]
+    private RectTransform contentContainer;
+
+    [SerializeField]
+    [Tooltip("The prefab used to display a piece of narrative text.")]
+    private NarrativeText narrativeTextPrefab;
+
+    [SerializeField]
+    [Tooltip("The ScrollRect containing the narrative history.")]
+    private ScrollRect scrollRect;
 
     [Header("Actions")]
 
     [SerializeField]
-    [Tooltip("The RectTransform that contains the generated location action buttons.")]
-    private RectTransform actionContainer;
-
-    [SerializeField]
     [Tooltip("The prefab used to display a location action.")]
     private LocationActionButton actionButtonPrefab;
+
+    private readonly List<GameObject> generatedContent =
+        new List<GameObject>();
 
     private readonly List<LocationActionButton> actionButtons =
         new List<LocationActionButton>();
 
     private void OnDisable()
     {
-        ClearActionButtons();
+        ClearGeneratedContent();
     }
 
     public void Show(
@@ -45,18 +56,20 @@ public class LocationPanel : MonoBehaviour
             return;
         }
 
-        ClearActionButtons();
+        ClearGeneratedContent();
 
         locationNameText.text =
             location.DisplayName;
 
-        locationDescriptionText.text =
-            location.Description;
+        gameObject.SetActive(true);
+
+        AppendNarrative(
+            location.Description);
 
         CreateActionButtons(
-            location);
+            location.Actions);
 
-        gameObject.SetActive(true);
+        ScrollToBottom();
     }
 
     public void Hide()
@@ -64,10 +77,32 @@ public class LocationPanel : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    private void CreateActionButtons(
-        LocationDefinition location)
+    private void AppendNarrative(
+        string text)
     {
-        foreach (LocationActionDefinition action in location.Actions)
+        NarrativeText narrativeText =
+            Instantiate(
+                narrativeTextPrefab,
+                contentContainer);
+
+        narrativeText.SetText(
+            text);
+
+        generatedContent.Add(
+            narrativeText.gameObject);
+    }
+
+    private void AppendChoiceHistory(
+        LocationActionDefinition action)
+    {
+        AppendNarrative(
+            $"> {action.DisplayName}");
+    }
+
+    private void CreateActionButtons(
+        LocationActionDefinition[] actions)
+    {
+        foreach (LocationActionDefinition action in actions)
         {
             if (action == null)
             {
@@ -77,7 +112,7 @@ public class LocationPanel : MonoBehaviour
             LocationActionButton actionButton =
                 Instantiate(
                     actionButtonPrefab,
-                    actionContainer);
+                    contentContainer);
 
             actionButton.SetAction(
                 action);
@@ -87,7 +122,27 @@ public class LocationPanel : MonoBehaviour
 
             actionButtons.Add(
                 actionButton);
+
+            generatedContent.Add(
+                actionButton.gameObject);
         }
+    }
+
+    private void HandleActionSelected(
+        LocationActionDefinition action)
+    {
+        ClearActionButtons();
+
+        AppendChoiceHistory(
+            action);
+
+        AppendNarrative(
+            action.Description);
+
+        CreateActionButtons(
+            action.FollowUpActions);
+
+        ScrollToBottom();
     }
 
     private void ClearActionButtons()
@@ -102,6 +157,9 @@ public class LocationPanel : MonoBehaviour
             actionButton.Selected -=
                 HandleActionSelected;
 
+            generatedContent.Remove(
+                actionButton.gameObject);
+
             Destroy(
                 actionButton.gameObject);
         }
@@ -109,10 +167,42 @@ public class LocationPanel : MonoBehaviour
         actionButtons.Clear();
     }
 
-    private void HandleActionSelected(
-        LocationActionDefinition action)
+    private void ClearGeneratedContent()
     {
-        locationDescriptionText.text =
-            action.Description;
+        ClearActionButtons();
+
+        foreach (GameObject content in generatedContent)
+        {
+            if (content == null)
+            {
+                continue;
+            }
+
+            Destroy(
+                content);
+        }
+
+        generatedContent.Clear();
+    }
+
+    private void ScrollToBottom()
+    {
+        if (scrollRect == null)
+        {
+            return;
+        }
+
+        StartCoroutine(
+            ScrollToBottomNextFrame());
+    }
+
+    private IEnumerator ScrollToBottomNextFrame()
+    {
+        yield return null;
+
+        Canvas.ForceUpdateCanvases();
+
+        scrollRect.verticalNormalizedPosition =
+            0f;
     }
 }

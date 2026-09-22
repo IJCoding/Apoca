@@ -46,7 +46,8 @@ public class LocationDefinition : ScriptableObject
 
     [SerializeField]
     [Tooltip("The actions that can be performed at this location.")]
-    private LocationActionDefinition[] actions;
+    private LocationActionDefinition[] actions =
+        Array.Empty<LocationActionDefinition>();
 
     public string LocationId => locationId;
 

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 [CreateAssetMenu(
@@ -22,7 +23,19 @@ public class LocationActionDefinition : ScriptableObject
     [Tooltip("The narrative text displayed when the player selects this action.")]
     private string description;
 
+    [Header("Follow-Up Actions")]
+
+    [SerializeField]
+    [Tooltip("The actions presented after this action has been selected.")]
+    private LocationActionDefinition[] followUpActions =
+        Array.Empty<LocationActionDefinition>();
+
     public string ActionId => actionId;
+
     public string DisplayName => displayName;
+
     public string Description => description;
+
+    public LocationActionDefinition[] FollowUpActions =>
+        followUpActions;
 }

@@ -12,9 +12,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1bcc0126920679944ae94db38b117f0b, type: 3}
   m_Name: Dock
   m_EditorClassIdentifier: Assembly-CSharp::LocationDefinition
-  locationId: 
+  locationId: Docks
   displayName: Docks
-  description: A place for fish n stuff
+  description: 'The docks stretch along the edge of the district, a maze of rusted
+    walkways, loading cranes, warehouses, and old cargo containers stacked three
+    or four high. The smell of salt hangs in the air, mixed with fuel, rotting fish,
+    and the metallic stink of machinery that should probably have been replaced decades
+    ago.
+
+    Workers move between the warehouses in small groups. Most of them keep
+    their heads down. A cargo hauler crawls past you, its engine coughing black smoke
+    as it disappears behind Warehouse Nine.
+
+    Further along the waterfront, a
+    collection of fishing vessels are tied against the old concrete piers. Some look
+    operational. Others seem to have become permanent homes for whoever couldn''t
+    afford somewhere better.
+
+    Across the water you can just make out the lights
+    of the industrial platforms. At this distance they almost look peaceful.
+
+    Almost.
+
+    Somewhere
+    inside the warehouse district, something heavy crashes to the ground. Nobody
+    nearby reacts.
+
+    There are several places worth investigating.'
   settings: 3
   actions:
   - {fileID: 11400000, guid: c26a4555ca7ba264e86c27be23c6c8d4, type: 2}

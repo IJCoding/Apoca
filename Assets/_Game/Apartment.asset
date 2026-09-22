@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1bcc0126920679944ae94db38b117f0b, type: 3}
   m_Name: Apartment
   m_EditorClassIdentifier: Assembly-CSharp::LocationDefinition
-  locationID: Apartment
+  locationId: Apartment
   displayName: Apartment
   description: A place to sleep n stuff
   settings: 11
+  actions: []
