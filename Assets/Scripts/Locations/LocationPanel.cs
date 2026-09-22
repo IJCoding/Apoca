@@ -69,7 +69,7 @@ public class LocationPanel : MonoBehaviour
         CreateActionButtons(
             location.Actions);
 
-        ScrollToBottom();
+        ScrollToTop();
     }
 
     public void Hide()
@@ -183,6 +183,27 @@ public class LocationPanel : MonoBehaviour
         }
 
         generatedContent.Clear();
+    }
+
+    private void ScrollToTop()
+    {
+        if (scrollRect == null)
+        {
+            return;
+        }
+
+        StartCoroutine(
+            ScrollToTopNextFrame());
+    }
+
+    private IEnumerator ScrollToTopNextFrame()
+    {
+        yield return null;
+
+        Canvas.ForceUpdateCanvases();
+
+        scrollRect.verticalNormalizedPosition =
+            1f;
     }
 
     private void ScrollToBottom()
