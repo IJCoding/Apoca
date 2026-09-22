@@ -17,5 +17,5 @@ MonoBehaviour:
   description: A place for money n shizz
   settings: 3
   actions:
-  - {fileID: 11400000, guid: c26a4555ca7ba264e86c27be23c6c8d4, type: 2}
+  - {fileID: 11400000, guid: edf830cf05616e74aaac914006e51bd4, type: 2}
   - {fileID: 11400000, guid: 1fda0daa29f3df24cb9ae00a1a999f2c, type: 2}

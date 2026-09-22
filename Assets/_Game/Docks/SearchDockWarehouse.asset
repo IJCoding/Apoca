@@ -15,3 +15,6 @@ MonoBehaviour:
   actionId: search_dock_warehouse
   displayName: Search The Warehouse Docks
   description: Search the warehouse docks
+  followUpActions:
+  - {fileID: 11400000, guid: 2f04be319deb88a4e98090a49c75a555, type: 2}
+  - {fileID: 11400000, guid: 952afce8acc7b974dbfe47b36128c80a, type: 2}
