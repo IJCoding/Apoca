@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -47,6 +48,62 @@ public class LocationPanel : MonoBehaviour
 
     private int selectedActionIndex = -1;
 
+    public event Action ActionsChanged;
+    public event Action SelectionChanged;
+
+    public bool HasActions =>
+        actionButtons.Count > 0;
+
+    public bool HasSelectedAction =>
+        selectedActionIndex >= 0 &&
+        selectedActionIndex < actionButtons.Count;
+
+    public ActionApproach SelectedApproach
+    {
+        get
+        {
+            if (!HasSelectedAction)
+            {
+                return ActionApproach.None;
+            }
+
+            LocationActionButton selectedButton =
+                actionButtons[selectedActionIndex];
+
+            if (selectedButton == null ||
+                selectedButton.Action == null)
+            {
+                return ActionApproach.None;
+            }
+
+            return selectedButton.Action.Approach;
+        }
+    }
+
+    public ActionApproach PreviousApproach
+    {
+        get
+        {
+            int index =
+                GetPreviousActionIndex();
+
+            return GetApproachAtIndex(
+                index);
+        }
+    }
+
+    public ActionApproach NextApproach
+    {
+        get
+        {
+            int index =
+                GetNextActionIndex();
+
+            return GetApproachAtIndex(
+                index);
+        }
+    }
+
     private void OnDisable()
     {
         ClearGeneratedContent();
@@ -66,8 +123,11 @@ public class LocationPanel : MonoBehaviour
 
         ClearGeneratedContent();
 
-        locationNameText.text =
-            location.DisplayName;
+        if (locationNameText != null)
+        {
+            locationNameText.text =
+                location.DisplayName;
+        }
 
         gameObject.SetActive(true);
 
@@ -85,82 +145,34 @@ public class LocationPanel : MonoBehaviour
         gameObject.SetActive(false);
     }
 
-    private void AppendNarrative(
-        string text)
+    public bool HasAvailableApproach(
+        ActionApproach approach)
     {
-        if (string.IsNullOrWhiteSpace(text))
+        foreach (LocationActionButton actionButton in actionButtons)
         {
-            return;
-        }
-
-        NarrativeText narrativeText =
-            Instantiate(
-                narrativeTextPrefab,
-                contentContainer);
-
-        narrativeText.SetText(
-            text);
-
-        generatedContent.Add(
-            narrativeText.gameObject);
-    }
-
-    private void AppendChoiceHistory(
-        LocationActionDefinition action)
-    {
-        AppendNarrative(
-            $"> {action.DisplayName}");
-    }
-
-    private void CreateActionButtons(
-        LocationActionDefinition[] actions)
-    {
-        selectedActionIndex = -1;
-
-        if (actions == null)
-        {
-            return;
-        }
-
-        foreach (LocationActionDefinition action in actions)
-        {
-            if (action == null)
+            if (actionButton == null ||
+                actionButton.Action == null)
             {
                 continue;
             }
 
-            LocationActionButton actionButton =
-                Instantiate(
-                    actionButtonPrefab,
-                    contentContainer);
-
-            actionButton.SetAction(
-                action);
-
-            actionButton.Selected +=
-                HandleActionSelected;
-
-            actionButtons.Add(
-                actionButton);
-
-            generatedContent.Add(
-                actionButton.gameObject);
+            if (actionButton.Action.Approach == approach)
+            {
+                return true;
+            }
         }
+
+        return false;
     }
 
     public void SelectNextAction()
     {
-        if (actionButtons.Count == 0)
+        int nextIndex =
+            GetNextActionIndex();
+
+        if (nextIndex < 0)
         {
             return;
-        }
-
-        int nextIndex =
-            selectedActionIndex + 1;
-
-        if (nextIndex >= actionButtons.Count)
-        {
-            nextIndex = 0;
         }
 
         SelectActionAtIndex(
@@ -169,18 +181,12 @@ public class LocationPanel : MonoBehaviour
 
     public void SelectPreviousAction()
     {
-        if (actionButtons.Count == 0)
-        {
-            return;
-        }
-
         int previousIndex =
-            selectedActionIndex - 1;
+            GetPreviousActionIndex();
 
         if (previousIndex < 0)
         {
-            previousIndex =
-                actionButtons.Count - 1;
+            return;
         }
 
         SelectActionAtIndex(
@@ -229,8 +235,7 @@ public class LocationPanel : MonoBehaviour
 
     public void ConfirmSelectedAction()
     {
-        if (selectedActionIndex < 0 ||
-            selectedActionIndex >= actionButtons.Count)
+        if (!HasSelectedAction)
         {
             return;
         }
@@ -246,6 +251,165 @@ public class LocationPanel : MonoBehaviour
 
         HandleActionSelected(
             selectedButton.Action);
+    }
+
+    private int GetNextActionIndex()
+    {
+        if (actionButtons.Count == 0)
+        {
+            return -1;
+        }
+
+        if (!HasSelectedAction)
+        {
+            return 0;
+        }
+
+        int nextIndex =
+            selectedActionIndex + 1;
+
+        if (nextIndex >= actionButtons.Count)
+        {
+            nextIndex = 0;
+        }
+
+        return nextIndex;
+    }
+
+    private int GetPreviousActionIndex()
+    {
+        if (actionButtons.Count == 0)
+        {
+            return -1;
+        }
+
+        if (!HasSelectedAction)
+        {
+            return actionButtons.Count - 1;
+        }
+
+        int previousIndex =
+            selectedActionIndex - 1;
+
+        if (previousIndex < 0)
+        {
+            previousIndex =
+                actionButtons.Count - 1;
+        }
+
+        return previousIndex;
+    }
+
+    private ActionApproach GetApproachAtIndex(
+        int index)
+    {
+        if (index < 0 ||
+            index >= actionButtons.Count)
+        {
+            return ActionApproach.None;
+        }
+
+        LocationActionButton actionButton =
+            actionButtons[index];
+
+        if (actionButton == null ||
+            actionButton.Action == null)
+        {
+            return ActionApproach.None;
+        }
+
+        return actionButton.Action.Approach;
+    }
+
+    private NarrativeText AppendNarrative(
+        string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        if (narrativeTextPrefab == null ||
+            contentContainer == null)
+        {
+            Debug.LogError(
+                "LocationPanel is missing its NarrativeText prefab or Content Container.",
+                this);
+
+            return null;
+        }
+
+        NarrativeText narrativeText =
+            Instantiate(
+                narrativeTextPrefab,
+                contentContainer);
+
+        narrativeText.SetText(
+            text);
+
+        generatedContent.Add(
+            narrativeText.gameObject);
+
+        return narrativeText;
+    }
+
+    private NarrativeText AppendChoiceHistory(
+        LocationActionDefinition action)
+    {
+        if (action == null)
+        {
+            return null;
+        }
+
+        return AppendNarrative(
+            $"> {action.DisplayName}");
+    }
+
+    private void CreateActionButtons(
+        LocationActionDefinition[] actions)
+    {
+        selectedActionIndex = -1;
+
+        if (actions != null)
+        {
+            foreach (LocationActionDefinition action in actions)
+            {
+                if (action == null)
+                {
+                    continue;
+                }
+
+                if (actionButtonPrefab == null ||
+                    contentContainer == null)
+                {
+                    Debug.LogError(
+                        "LocationPanel is missing its LocationActionButton prefab or Content Container.",
+                        this);
+
+                    break;
+                }
+
+                LocationActionButton actionButton =
+                    Instantiate(
+                        actionButtonPrefab,
+                        contentContainer);
+
+                actionButton.SetAction(
+                    action);
+
+                actionButton.Selected +=
+                    HandleActionSelected;
+
+                actionButtons.Add(
+                    actionButton);
+
+                generatedContent.Add(
+                    actionButton.gameObject);
+            }
+        }
+
+        ActionsChanged?.Invoke();
+        SelectionChanged?.Invoke();
     }
 
     private void SelectActionAtIndex(
@@ -276,16 +440,24 @@ public class LocationPanel : MonoBehaviour
         selectedActionIndex =
             index;
 
+        SelectionChanged?.Invoke();
+
         ScrollSelectedActionIntoView();
     }
 
     private void HandleActionSelected(
         LocationActionDefinition action)
     {
+        if (action == null)
+        {
+            return;
+        }
+
         ClearActionButtons();
 
-        AppendChoiceHistory(
-            action);
+        NarrativeText choiceHistory =
+            AppendChoiceHistory(
+                action);
 
         if (action.RequiresMove)
         {
@@ -298,7 +470,11 @@ public class LocationPanel : MonoBehaviour
                 action);
         }
 
-        ScrollToBottom();
+        if (choiceHistory != null)
+        {
+            ScrollEntryToTop(
+                choiceHistory.transform as RectTransform);
+        }
     }
 
     private void ResolveNarrativeAction(
@@ -347,6 +523,11 @@ public class LocationPanel : MonoBehaviour
         MoveDefinition move,
         MoveResolution resolution)
     {
+        if (move == null)
+        {
+            return;
+        }
+
         string modifierText =
             resolution.Modifier >= 0
                 ? $"+{resolution.Modifier}"
@@ -402,6 +583,9 @@ public class LocationPanel : MonoBehaviour
         actionButtons.Clear();
 
         selectedActionIndex = -1;
+
+        ActionsChanged?.Invoke();
+        SelectionChanged?.Invoke();
     }
 
     private void ClearGeneratedContent()
@@ -425,8 +609,7 @@ public class LocationPanel : MonoBehaviour
     private void ScrollSelectedActionIntoView()
     {
         if (scrollRect == null ||
-            selectedActionIndex < 0 ||
-            selectedActionIndex >= actionButtons.Count)
+            !HasSelectedAction)
         {
             return;
         }
@@ -440,6 +623,11 @@ public class LocationPanel : MonoBehaviour
         yield return null;
 
         Canvas.ForceUpdateCanvases();
+
+        if (!HasSelectedAction)
+        {
+            yield break;
+        }
 
         LocationActionButton selectedButton =
             actionButtons[selectedActionIndex];
@@ -456,7 +644,8 @@ public class LocationPanel : MonoBehaviour
             selectedButton.transform as RectTransform;
 
         if (viewport == null ||
-            selectedRect == null)
+            selectedRect == null ||
+            contentContainer == null)
         {
             yield break;
         }
@@ -501,6 +690,64 @@ public class LocationPanel : MonoBehaviour
             contentPosition;
     }
 
+    private void ScrollEntryToTop(
+        RectTransform entry)
+    {
+        if (scrollRect == null ||
+            entry == null)
+        {
+            return;
+        }
+
+        StartCoroutine(
+            ScrollEntryToTopNextFrame(
+                entry));
+    }
+
+    private IEnumerator ScrollEntryToTopNextFrame(
+        RectTransform entry)
+    {
+        yield return null;
+
+        Canvas.ForceUpdateCanvases();
+
+        if (entry == null ||
+            scrollRect == null ||
+            contentContainer == null)
+        {
+            yield break;
+        }
+
+        RectTransform viewport =
+            scrollRect.viewport;
+
+        if (viewport == null)
+        {
+            yield break;
+        }
+
+        Bounds entryBounds =
+            RectTransformUtility.CalculateRelativeRectTransformBounds(
+                viewport,
+                entry);
+
+        Rect viewportRect =
+            viewport.rect;
+
+        float distanceToTop =
+            viewportRect.yMax -
+            entryBounds.max.y;
+
+        Vector2 contentPosition =
+            contentContainer.anchoredPosition;
+
+        contentPosition.y -=
+            distanceToTop;
+
+        contentContainer.anchoredPosition =
+            contentPosition;
+    }
+
     private void ScrollToTop()
     {
         if (scrollRect == null)
@@ -520,26 +767,5 @@ public class LocationPanel : MonoBehaviour
 
         scrollRect.verticalNormalizedPosition =
             1f;
-    }
-
-    private void ScrollToBottom()
-    {
-        if (scrollRect == null)
-        {
-            return;
-        }
-
-        StartCoroutine(
-            ScrollToBottomNextFrame());
-    }
-
-    private IEnumerator ScrollToBottomNextFrame()
-    {
-        yield return null;
-
-        Canvas.ForceUpdateCanvases();
-
-        scrollRect.verticalNormalizedPosition =
-            0f;
     }
 }

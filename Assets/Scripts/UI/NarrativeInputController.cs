@@ -1,52 +1,88 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 public class NarrativeInputController : MonoBehaviour
 {
-    [Header("UI")]
+    [Header("References")]
 
     [SerializeField]
-    [Tooltip("The location panel controlled by narrative input.")]
+    [Tooltip("The LocationPanel controlled by narrative input.")]
     private LocationPanel locationPanel;
 
-    [Header("Input")]
+    [SerializeField]
+    [Tooltip("The ScrollRect used by the LocationPanel narrative area.")]
+    private ScrollRect scrollRect;
+
+    [Header("Input Actions")]
 
     [SerializeField]
-    [Tooltip("Input action used to select/cycle Valor actions.")]
     private InputActionReference valorAction;
 
     [SerializeField]
-    [Tooltip("Input action used to select/cycle Wit actions.")]
     private InputActionReference witAction;
 
     [SerializeField]
-    [Tooltip("Input action used to select/cycle Soul actions.")]
     private InputActionReference soulAction;
 
     [SerializeField]
-    [Tooltip("Input action used to select/cycle Shadow actions.")]
     private InputActionReference shadowAction;
 
     [SerializeField]
-    [Tooltip("Input action used to select/cycle Fortune actions.")]
     private InputActionReference fortuneAction;
 
     [SerializeField]
-    [Tooltip("Input action used to select/cycle unaligned actions.")]
     private InputActionReference unalignedAction;
 
     [SerializeField]
-    [Tooltip("Input action used to select the previous action.")]
     private InputActionReference previousAction;
 
     [SerializeField]
-    [Tooltip("Input action used to select the next action.")]
     private InputActionReference nextAction;
 
     [SerializeField]
-    [Tooltip("Input action used to confirm the selected action.")]
     private InputActionReference confirmAction;
+
+    [SerializeField]
+    private InputActionReference scrollDownAction;
+
+    [SerializeField]
+    private InputActionReference scrollUpAction;
+
+    [Header("Scrolling")]
+
+    [SerializeField]
+    [Range(0.01f, 0.5f)]
+    [Tooltip("How far the narrative scrolls for each Scroll Up or Scroll Down input.")]
+    private float scrollStep = 0.15f;
+
+    private void Reset()
+    {
+        locationPanel =
+            GetComponent<LocationPanel>();
+
+        if (locationPanel != null)
+        {
+            scrollRect =
+                GetComponentInChildren<ScrollRect>();
+        }
+    }
+
+    private void Awake()
+    {
+        if (locationPanel == null)
+        {
+            locationPanel =
+                GetComponent<LocationPanel>();
+        }
+
+        if (scrollRect == null)
+        {
+            scrollRect =
+                GetComponentInChildren<ScrollRect>();
+        }
+    }
 
     private void OnEnable()
     {
@@ -85,6 +121,14 @@ public class NarrativeInputController : MonoBehaviour
         Subscribe(
             confirmAction,
             HandleConfirm);
+
+        Subscribe(
+            scrollDownAction,
+            HandleScrollDown);
+
+        Subscribe(
+            scrollUpAction,
+            HandleScrollUp);
     }
 
     private void OnDisable()
@@ -124,13 +168,22 @@ public class NarrativeInputController : MonoBehaviour
         Unsubscribe(
             confirmAction,
             HandleConfirm);
+
+        Unsubscribe(
+            scrollDownAction,
+            HandleScrollDown);
+
+        Unsubscribe(
+            scrollUpAction,
+            HandleScrollUp);
     }
 
     private void Subscribe(
         InputActionReference actionReference,
         System.Action<InputAction.CallbackContext> callback)
     {
-        if (actionReference == null)
+        if (actionReference == null ||
+            actionReference.action == null)
         {
             return;
         }
@@ -145,7 +198,8 @@ public class NarrativeInputController : MonoBehaviour
         InputActionReference actionReference,
         System.Action<InputAction.CallbackContext> callback)
     {
-        if (actionReference == null)
+        if (actionReference == null ||
+            actionReference.action == null)
         {
             return;
         }
@@ -231,6 +285,20 @@ public class NarrativeInputController : MonoBehaviour
         locationPanel.ConfirmSelectedAction();
     }
 
+    private void HandleScrollDown(
+        InputAction.CallbackContext context)
+    {
+        Scroll(
+            -scrollStep);
+    }
+
+    private void HandleScrollUp(
+        InputAction.CallbackContext context)
+    {
+        Scroll(
+            scrollStep);
+    }
+
     private void SelectApproach(
         ActionApproach approach)
     {
@@ -241,5 +309,22 @@ public class NarrativeInputController : MonoBehaviour
 
         locationPanel.SelectNextApproach(
             approach);
+    }
+
+    private void Scroll(
+        float amount)
+    {
+        if (scrollRect == null)
+        {
+            return;
+        }
+
+        float newPosition =
+            scrollRect.verticalNormalizedPosition +
+            amount;
+
+        scrollRect.verticalNormalizedPosition =
+            Mathf.Clamp01(
+                newPosition);
     }
 }

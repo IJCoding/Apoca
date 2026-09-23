@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1576c30c90bcd6449ae6f80f7a689bc0, type: 3}
+  m_Name: GameUITheme
+  m_EditorClassIdentifier: Assembly-CSharp::GameUITheme
+  unaligned:
+    normalColor: {r: 0.84705883, g: 0.8392157, b: 0.8117647, a: 1}
+    selectedColor: {r: 1, g: 0.99215686, b: 0.9607843, a: 1}
+    textColor: {r: 0.1254902, g: 0.13725491, b: 0.16078432, a: 1}
+    disabledColor: {r: 0.46666667, g: 0.47843137, b: 0.49019608, a: 1}
+    disabledTextColor: {r: 0.72156864, g: 0.72156864, b: 0.70980394, a: 1}
+  valor:
+    normalColor: {r: 0.78431374, g: 0.23921569, b: 0.23921569, a: 1}
+    selectedColor: {r: 1, g: 0.39607844, b: 0.33333334, a: 1}
+    textColor: {r: 1, g: 0.95686275, b: 0.9254902, a: 1}
+    disabledColor: {r: 0.4392157, g: 0.2784314, b: 0.2784314, a: 1}
+    disabledTextColor: {r: 0.7411765, g: 0.65882355, b: 0.6431373, a: 1}
+  wit:
+    normalColor: {r: 0.15686275, g: 0.49803922, b: 0.6392157, a: 1}
+    selectedColor: {r: 0.28235295, g: 0.7764706, b: 0.8980392, a: 1}
+    textColor: {r: 0.94509804, g: 0.9843137, b: 1, a: 1}
+    disabledColor: {r: 0.28235295, g: 0.40784314, b: 0.4509804, a: 1}
+    disabledTextColor: {r: 0.65882355, g: 0.7254902, b: 0.74509805, a: 1}
+  soul:
+    normalColor: {r: 0.59607846, g: 0.32156864, b: 0.60784316, a: 1}
+    selectedColor: {r: 0.84313726, g: 0.47843137, b: 0.78431374, a: 1}
+    textColor: {r: 1, g: 0.9529412, b: 0.9882353, a: 1}
+    disabledColor: {r: 0.40784314, g: 0.30588236, b: 0.40784314, a: 1}
+    disabledTextColor: {r: 0.73333335, g: 0.6627451, b: 0.72156864, a: 1}
+  shadow:
+    normalColor: {r: 0.24705882, g: 0.37254903, b: 0.39215687, a: 1}
+    selectedColor: {r: 0.43529412, g: 0.5882353, b: 0.5803922, a: 1}
+    textColor: {r: 0.94509804, g: 0.9607843, b: 0.9490196, a: 1}
+    disabledColor: {r: 0.27058825, g: 0.30980393, b: 0.3137255, a: 1}
+    disabledTextColor: {r: 0.64705884, g: 0.68235296, b: 0.6745098, a: 1}
+  fortune:
+    normalColor: {r: 0.8352941, g: 0.654902, b: 0.18431373, a: 1}
+    selectedColor: {r: 1, g: 0.84313726, b: 0.3529412, a: 1}
+    textColor: {r: 0.15686275, g: 0.14509805, b: 0.11372549, a: 1}
+    disabledColor: {r: 0.45882353, g: 0.40784314, b: 0.25882354, a: 1}
+    disabledTextColor: {r: 0.7411765, g: 0.7137255, b: 0.6313726, a: 1}

@@ -136,6 +136,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LocationActionButton
   actionNameText: {fileID: 9132612961996931483}
+  theme: {fileID: 11400000, guid: 67fbbf503f50de04f88fb022ffde17db, type: 2}
 --- !u!114 &9107527454996343190
 MonoBehaviour:
   m_ObjectHideFlags: 0

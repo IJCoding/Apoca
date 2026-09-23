@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Button))]
+[RequireComponent(typeof(Image))]
 public class LocationActionButton : MonoBehaviour
 {
     [Header("UI")]
@@ -13,32 +14,11 @@ public class LocationActionButton : MonoBehaviour
     [Tooltip("Displays the name of the location action.")]
     private TMP_Text actionNameText;
 
-    [Header("Approach Themes")]
+    [Header("Theme")]
 
     [SerializeField]
-    private Color neutralColor = Color.white;
-
-    [SerializeField]
-    private Color valorColor = new Color(0.8f, 0.25f, 0.25f);
-
-    [SerializeField]
-    private Color witColor = new Color(0.25f, 0.55f, 0.9f);
-
-    [SerializeField]
-    private Color soulColor = new Color(0.65f, 0.35f, 0.8f);
-
-    [SerializeField]
-    private Color shadowColor = new Color(0.4f, 0.4f, 0.4f);
-
-    [SerializeField]
-    private Color fortuneColor = new Color(0.9f, 0.75f, 0.2f);
-
-    [Header("Selection")]
-
-    [SerializeField]
-    [Range(1f, 2f)]
-    [Tooltip("How much brighter the selected action appears.")]
-    private float selectedBrightness = 1.25f;
+    [Tooltip("Shared UI theme used to style this action button.")]
+    private GameUITheme theme;
 
     private Button button;
     private Image buttonImage;
@@ -47,9 +27,11 @@ public class LocationActionButton : MonoBehaviour
 
     private bool isSelected;
 
-    public LocationActionDefinition Action => action;
+    public LocationActionDefinition Action =>
+        action;
 
-    public bool IsSelected => isSelected;
+    public bool IsSelected =>
+        isSelected;
 
     public event Action<LocationActionDefinition> Selected;
 
@@ -60,18 +42,37 @@ public class LocationActionButton : MonoBehaviour
 
         buttonImage =
             GetComponent<Image>();
+
+        RefreshVisual();
     }
 
     private void OnEnable()
     {
+        if (button == null)
+        {
+            button =
+                GetComponent<Button>();
+        }
+
+        if (buttonImage == null)
+        {
+            buttonImage =
+                GetComponent<Image>();
+        }
+
         button.onClick.AddListener(
             HandleButtonClicked);
+
+        RefreshVisual();
     }
 
     private void OnDisable()
     {
-        button.onClick.RemoveListener(
-            HandleButtonClicked);
+        if (button != null)
+        {
+            button.onClick.RemoveListener(
+                HandleButtonClicked);
+        }
     }
 
     public void SetAction(
@@ -83,18 +84,13 @@ public class LocationActionButton : MonoBehaviour
         isSelected =
             false;
 
-        if (action == null)
+        if (actionNameText != null)
         {
             actionNameText.text =
-                string.Empty;
-
-            RefreshVisual();
-
-            return;
+                action != null
+                    ? action.DisplayName
+                    : string.Empty;
         }
-
-        actionNameText.text =
-            action.DisplayName;
 
         RefreshVisual();
     }
@@ -111,6 +107,12 @@ public class LocationActionButton : MonoBehaviour
     public void SetInteractable(
         bool interactable)
     {
+        if (button == null)
+        {
+            button =
+                GetComponent<Button>();
+        }
+
         button.interactable =
             interactable;
 
@@ -119,55 +121,57 @@ public class LocationActionButton : MonoBehaviour
 
     private void RefreshVisual()
     {
+        if (button == null)
+        {
+            button =
+                GetComponent<Button>();
+        }
+
         if (buttonImage == null)
+        {
+            buttonImage =
+                GetComponent<Image>();
+        }
+
+        if (theme == null ||
+            buttonImage == null ||
+            button == null)
         {
             return;
         }
 
-        Color baseColor =
-            GetApproachColor();
+        ActionApproach approach =
+            action != null
+                ? action.Approach
+                : ActionApproach.None;
 
-        if (isSelected)
+        GameUITheme.ApproachStyle style =
+            theme.GetApproachStyle(
+                approach);
+
+        if (!button.interactable)
         {
-            baseColor =
-                new Color(
-                    Mathf.Clamp01(baseColor.r * selectedBrightness),
-                    Mathf.Clamp01(baseColor.g * selectedBrightness),
-                    Mathf.Clamp01(baseColor.b * selectedBrightness),
-                    baseColor.a);
+            buttonImage.color =
+                style.DisabledColor;
+
+            if (actionNameText != null)
+            {
+                actionNameText.color =
+                    style.DisabledTextColor;
+            }
+
+            return;
         }
 
         buttonImage.color =
-            baseColor;
-    }
+            isSelected
+                ? style.SelectedColor
+                : style.NormalColor;
 
-    private Color GetApproachColor()
-    {
-        if (action == null)
+        if (actionNameText != null)
         {
-            return neutralColor;
-        }
-
-        switch (action.Approach)
-        {
-            case ActionApproach.Valor:
-                return valorColor;
-
-            case ActionApproach.Wit:
-                return witColor;
-
-            case ActionApproach.Soul:
-                return soulColor;
-
-            case ActionApproach.Shadow:
-                return shadowColor;
-
-            case ActionApproach.Fortune:
-                return fortuneColor;
-
-            case ActionApproach.None:
-            default:
-                return neutralColor;
+            actionNameText.color =
+                style.TextColor;
         }
     }
 
