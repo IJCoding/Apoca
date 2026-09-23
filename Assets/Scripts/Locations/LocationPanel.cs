@@ -472,8 +472,11 @@ public class LocationPanel : MonoBehaviour
 
         if (choiceHistory != null)
         {
+            RectTransform choiceRect =
+                choiceHistory.transform as RectTransform;
+
             ScrollEntryToTop(
-                choiceHistory.transform as RectTransform);
+                choiceRect);
         }
     }
 
@@ -624,7 +627,8 @@ public class LocationPanel : MonoBehaviour
 
         Canvas.ForceUpdateCanvases();
 
-        if (!HasSelectedAction)
+        if (!HasSelectedAction ||
+            scrollRect == null)
         {
             yield break;
         }
@@ -707,9 +711,14 @@ public class LocationPanel : MonoBehaviour
     private IEnumerator ScrollEntryToTopNextFrame(
         RectTransform entry)
     {
-        yield return null;
-
-        Canvas.ForceUpdateCanvases();
+        /*
+         * The action buttons have just been destroyed and new narrative
+         * content has just been created.
+         *
+         * Unity's layout system therefore needs to finish rebuilding
+         * before we calculate where the new "> Choice" entry actually is.
+         */
+        yield return new WaitForEndOfFrame();
 
         if (entry == null ||
             scrollRect == null ||
@@ -717,6 +726,13 @@ public class LocationPanel : MonoBehaviour
         {
             yield break;
         }
+
+        Canvas.ForceUpdateCanvases();
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(
+            contentContainer);
+
+        Canvas.ForceUpdateCanvases();
 
         RectTransform viewport =
             scrollRect.viewport;
@@ -726,26 +742,101 @@ public class LocationPanel : MonoBehaviour
             yield break;
         }
 
-        Bounds entryBounds =
-            RectTransformUtility.CalculateRelativeRectTransformBounds(
-                viewport,
-                entry);
+        /*
+         * Work in world coordinates here.
+         *
+         * GetWorldCorners:
+         *
+         * 0 = bottom-left
+         * 1 = top-left
+         * 2 = top-right
+         * 3 = bottom-right
+         */
+        Vector3[] entryCorners =
+            new Vector3[4];
 
-        Rect viewportRect =
-            viewport.rect;
+        Vector3[] viewportCorners =
+            new Vector3[4];
 
-        float distanceToTop =
-            viewportRect.yMax -
-            entryBounds.max.y;
+        entry.GetWorldCorners(
+            entryCorners);
+
+        viewport.GetWorldCorners(
+            viewportCorners);
+
+        float entryTop =
+            entryCorners[1].y;
+
+        float viewportTop =
+            viewportCorners[1].y;
+
+        /*
+         * Determine how far apart the top of the choice entry
+         * and the top of the viewport currently are.
+         */
+        float worldDifference =
+            viewportTop -
+            entryTop;
+
+        /*
+         * anchoredPosition is in the content parent's local space,
+         * so convert the world-space distance into local-space distance.
+         */
+        RectTransform contentParent =
+            contentContainer.parent as RectTransform;
+
+        if (contentParent == null)
+        {
+            yield break;
+        }
+
+        Vector3 worldStart =
+            contentParent.TransformPoint(
+                Vector3.zero);
+
+        Vector3 worldEnd =
+            worldStart +
+            new Vector3(
+                0f,
+                worldDifference,
+                0f);
+
+        Vector3 localStart =
+            contentParent.InverseTransformPoint(
+                worldStart);
+
+        Vector3 localEnd =
+            contentParent.InverseTransformPoint(
+                worldEnd);
+
+        float localDifference =
+            localEnd.y -
+            localStart.y;
 
         Vector2 contentPosition =
             contentContainer.anchoredPosition;
 
-        contentPosition.y -=
-            distanceToTop;
+        /*
+         * Moving the content upward moves entries upward through
+         * the viewport.
+         */
+        contentPosition.y +=
+            localDifference;
 
         contentContainer.anchoredPosition =
             contentPosition;
+
+        /*
+         * Clamp the ScrollRect afterwards.
+         *
+         * If the selected choice is near the very end of all available
+         * content, Unity cannot physically place it at the top unless
+         * enough content exists below it. In that case the ScrollRect
+         * naturally stops at its valid limit.
+         */
+        Canvas.ForceUpdateCanvases();
+
+        scrollRect.StopMovement();
     }
 
     private void ScrollToTop()
@@ -764,6 +855,11 @@ public class LocationPanel : MonoBehaviour
         yield return null;
 
         Canvas.ForceUpdateCanvases();
+
+        if (scrollRect == null)
+        {
+            yield break;
+        }
 
         scrollRect.verticalNormalizedPosition =
             1f;

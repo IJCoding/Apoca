@@ -62,11 +62,8 @@ public class NarrativeInputController : MonoBehaviour
         locationPanel =
             GetComponent<LocationPanel>();
 
-        if (locationPanel != null)
-        {
-            scrollRect =
-                GetComponentInChildren<ScrollRect>();
-        }
+        scrollRect =
+            GetComponentInChildren<ScrollRect>();
     }
 
     private void Awake()
@@ -277,7 +274,8 @@ public class NarrativeInputController : MonoBehaviour
     private void HandleConfirm(
         InputAction.CallbackContext context)
     {
-        if (locationPanel == null)
+        if (locationPanel == null ||
+            !locationPanel.HasSelectedAction)
         {
             return;
         }
@@ -318,6 +316,8 @@ public class NarrativeInputController : MonoBehaviour
         {
             return;
         }
+
+        scrollRect.StopMovement();
 
         float newPosition =
             scrollRect.verticalNormalizedPosition +
