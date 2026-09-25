@@ -16,6 +16,8 @@ MonoBehaviour:
   displayName: Search The Warehouse Docks
   approach: 0
   description: Search the warehouse docks
+  requirements: []
+  effects: []
   move: {fileID: 11400000, guid: 9079edb302698b840b432632a2646877, type: 2}
   strongHitText: You immediately spot the signs that someone has been living in the
     warehouse...
@@ -34,3 +36,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: fe8711d0cf05fa4468fd1df71b0c7bd6, type: 2}
   missFollowUpActions:
   - {fileID: 11400000, guid: f8048124e17d5e04ea4faf05cf7c0c3b, type: 2}
+  references:
+    version: 2
+    RefIds: []

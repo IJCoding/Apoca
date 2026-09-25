@@ -17,6 +17,8 @@ MonoBehaviour:
   approach: 4
   description: You know something or someone is there. It may hear you leave, but
     it wont know you
+  requirements: []
+  effects: []
   move: {fileID: 0}
   strongHitText: 
   weakHitText: 
@@ -25,3 +27,6 @@ MonoBehaviour:
   strongHitFollowUpActions: []
   weakHitFollowUpActions: []
   missFollowUpActions: []
+  references:
+    version: 2
+    RefIds: []

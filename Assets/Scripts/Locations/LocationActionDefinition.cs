@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(
@@ -19,12 +20,27 @@ public class LocationActionDefinition : ScriptableObject
     [SerializeField]
     [Tooltip("The thematic approach this action belongs to. None is used for general actions such as Leave or Continue.")]
     private ActionApproach approach;
+
     [Header("Narrative")]
 
     [SerializeField]
     [TextArea(3, 8)]
     [Tooltip("The narrative text displayed when this action does not require a move.")]
     private string description;
+
+    [Header("Game State Requirements")]
+
+    [SerializeReference]
+    [Tooltip("Every requirement in this list must be met before this action can be selected.")]
+    private List<GameCondition> requirements =
+        new List<GameCondition>();
+
+    [Header("Game State Effects")]
+
+    [SerializeReference]
+    [Tooltip("Effects applied when this action is selected.")]
+    private List<GameEffect> effects =
+        new List<GameEffect>();
 
     [Header("Move")]
 
@@ -71,25 +87,87 @@ public class LocationActionDefinition : ScriptableObject
     private LocationActionDefinition[] missFollowUpActions =
         Array.Empty<LocationActionDefinition>();
 
-    public string ActionId => actionId;
+    public string ActionId =>
+        actionId;
 
-    public string DisplayName => displayName;
+    public string DisplayName =>
+        displayName;
 
-    public string Description => description;
+    public string Description =>
+        description;
 
-    public MoveDefinition Move => move;
+    public MoveDefinition Move =>
+        move;
 
-    public bool RequiresMove => move != null;
+    public bool RequiresMove =>
+        move != null;
 
-    public string StrongHitText => strongHitText;
+    public string StrongHitText =>
+        strongHitText;
 
-    public string WeakHitText => weakHitText;
+    public string WeakHitText =>
+        weakHitText;
 
-    public string MissText => missText;
+    public string MissText =>
+        missText;
 
-    public ActionApproach Approach => approach;
+    public ActionApproach Approach =>
+        approach;
+
+    public IReadOnlyList<GameCondition> Requirements =>
+        requirements;
+
+    public IReadOnlyList<GameEffect> Effects =>
+        effects;
+
     public LocationActionDefinition[] FollowUpActions =>
         followUpActions;
+
+    public bool AreRequirementsMet(
+        PlayerGameState gameState)
+    {
+        if (requirements == null ||
+            requirements.Count == 0)
+        {
+            return true;
+        }
+
+        foreach (GameCondition requirement in requirements)
+        {
+            if (requirement == null)
+            {
+                continue;
+            }
+
+            if (!requirement.IsMet(
+                gameState))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public void ApplyEffects(
+        PlayerGameState gameState)
+    {
+        if (effects == null)
+        {
+            return;
+        }
+
+        foreach (GameEffect effect in effects)
+        {
+            if (effect == null)
+            {
+                continue;
+            }
+
+            effect.Apply(
+                gameState);
+        }
+    }
 
     public string GetResultText(
         MoveResult result)

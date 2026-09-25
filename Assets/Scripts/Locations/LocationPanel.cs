@@ -34,6 +34,12 @@ public class LocationPanel : MonoBehaviour
     [Tooltip("The prefab used to display a location action.")]
     private LocationActionButton actionButtonPrefab;
 
+    [Header("Game State")]
+
+    [SerializeField]
+    [Tooltip("The runtime game state used to evaluate requirements and apply effects.")]
+    private PlayerGameState gameState;
+
     [Header("Moves")]
 
     [SerializeField]
@@ -56,7 +62,9 @@ public class LocationPanel : MonoBehaviour
 
     public bool HasSelectedAction =>
         selectedActionIndex >= 0 &&
-        selectedActionIndex < actionButtons.Count;
+        selectedActionIndex < actionButtons.Count &&
+        IsActionAvailableAtIndex(
+            selectedActionIndex);
 
     public ActionApproach SelectedApproach
     {
@@ -104,6 +112,15 @@ public class LocationPanel : MonoBehaviour
         }
     }
 
+    private void Awake()
+    {
+        if (gameState == null)
+        {
+            gameState =
+                FindFirstObjectByType<PlayerGameState>();
+        }
+    }
+
     private void OnDisable()
     {
         ClearGeneratedContent();
@@ -120,6 +137,8 @@ public class LocationPanel : MonoBehaviour
 
             return;
         }
+
+        EnsureGameState();
 
         ClearGeneratedContent();
 
@@ -151,7 +170,8 @@ public class LocationPanel : MonoBehaviour
         foreach (LocationActionButton actionButton in actionButtons)
         {
             if (actionButton == null ||
-                actionButton.Action == null)
+                actionButton.Action == null ||
+                !actionButton.IsAvailable)
             {
                 continue;
             }
@@ -209,14 +229,16 @@ public class LocationPanel : MonoBehaviour
              offset++)
         {
             int index =
-                (startIndex + offset) %
-                actionButtons.Count;
+                Mod(
+                    startIndex + offset,
+                    actionButtons.Count);
 
             LocationActionButton actionButton =
                 actionButtons[index];
 
             if (actionButton == null ||
-                actionButton.Action == null)
+                actionButton.Action == null ||
+                !actionButton.IsAvailable)
             {
                 continue;
             }
@@ -244,7 +266,8 @@ public class LocationPanel : MonoBehaviour
             actionButtons[selectedActionIndex];
 
         if (selectedButton == null ||
-            selectedButton.Action == null)
+            selectedButton.Action == null ||
+            !selectedButton.IsAvailable)
         {
             return;
         }
@@ -260,20 +283,28 @@ public class LocationPanel : MonoBehaviour
             return -1;
         }
 
-        if (!HasSelectedAction)
+        int startIndex =
+            HasSelectedAction
+                ? selectedActionIndex
+                : -1;
+
+        for (int offset = 1;
+             offset <= actionButtons.Count;
+             offset++)
         {
-            return 0;
+            int index =
+                Mod(
+                    startIndex + offset,
+                    actionButtons.Count);
+
+            if (IsActionAvailableAtIndex(
+                index))
+            {
+                return index;
+            }
         }
 
-        int nextIndex =
-            selectedActionIndex + 1;
-
-        if (nextIndex >= actionButtons.Count)
-        {
-            nextIndex = 0;
-        }
-
-        return nextIndex;
+        return -1;
     }
 
     private int GetPreviousActionIndex()
@@ -283,40 +314,58 @@ public class LocationPanel : MonoBehaviour
             return -1;
         }
 
-        if (!HasSelectedAction)
+        int startIndex =
+            HasSelectedAction
+                ? selectedActionIndex
+                : 0;
+
+        for (int offset = 1;
+             offset <= actionButtons.Count;
+             offset++)
         {
-            return actionButtons.Count - 1;
+            int index =
+                Mod(
+                    startIndex - offset,
+                    actionButtons.Count);
+
+            if (IsActionAvailableAtIndex(
+                index))
+            {
+                return index;
+            }
         }
 
-        int previousIndex =
-            selectedActionIndex - 1;
+        return -1;
+    }
 
-        if (previousIndex < 0)
+    private bool IsActionAvailableAtIndex(
+        int index)
+    {
+        if (index < 0 ||
+            index >= actionButtons.Count)
         {
-            previousIndex =
-                actionButtons.Count - 1;
+            return false;
         }
 
-        return previousIndex;
+        LocationActionButton actionButton =
+            actionButtons[index];
+
+        return actionButton != null &&
+               actionButton.Action != null &&
+               actionButton.IsAvailable;
     }
 
     private ActionApproach GetApproachAtIndex(
         int index)
     {
-        if (index < 0 ||
-            index >= actionButtons.Count)
+        if (!IsActionAvailableAtIndex(
+            index))
         {
             return ActionApproach.None;
         }
 
         LocationActionButton actionButton =
             actionButtons[index];
-
-        if (actionButton == null ||
-            actionButton.Action == null)
-        {
-            return ActionApproach.None;
-        }
 
         return actionButton.Action.Approach;
     }
@@ -370,6 +419,8 @@ public class LocationPanel : MonoBehaviour
     {
         selectedActionIndex = -1;
 
+        EnsureGameState();
+
         if (actions != null)
         {
             foreach (LocationActionDefinition action in actions)
@@ -397,6 +448,13 @@ public class LocationPanel : MonoBehaviour
                 actionButton.SetAction(
                     action);
 
+                bool isAvailable =
+                    action.AreRequirementsMet(
+                        gameState);
+
+                actionButton.SetAvailable(
+                    isAvailable);
+
                 actionButton.Selected +=
                     HandleActionSelected;
 
@@ -415,8 +473,8 @@ public class LocationPanel : MonoBehaviour
     private void SelectActionAtIndex(
         int index)
     {
-        if (index < 0 ||
-            index >= actionButtons.Count)
+        if (!IsActionAvailableAtIndex(
+            index))
         {
             return;
         }
@@ -452,6 +510,26 @@ public class LocationPanel : MonoBehaviour
         {
             return;
         }
+
+        EnsureGameState();
+
+        if (!action.AreRequirementsMet(
+            gameState))
+        {
+            RefreshActionAvailability();
+
+            return;
+        }
+
+        /*
+         * Apply the action's game-state effects before creating its
+         * follow-up choices.
+         *
+         * This means a flag changed by this action can immediately
+         * affect which follow-up actions are available.
+         */
+        action.ApplyEffects(
+            gameState);
 
         ClearActionButtons();
 
@@ -562,6 +640,51 @@ public class LocationPanel : MonoBehaviour
             default:
                 return result.ToString();
         }
+    }
+
+    private void RefreshActionAvailability()
+    {
+        EnsureGameState();
+
+        bool selectedActionBecameUnavailable =
+            false;
+
+        for (int i = 0;
+             i < actionButtons.Count;
+             i++)
+        {
+            LocationActionButton actionButton =
+                actionButtons[i];
+
+            if (actionButton == null ||
+                actionButton.Action == null)
+            {
+                continue;
+            }
+
+            bool isAvailable =
+                actionButton.Action.AreRequirementsMet(
+                    gameState);
+
+            actionButton.SetAvailable(
+                isAvailable);
+
+            if (i == selectedActionIndex &&
+                !isAvailable)
+            {
+                selectedActionBecameUnavailable =
+                    true;
+            }
+        }
+
+        if (selectedActionBecameUnavailable)
+        {
+            selectedActionIndex =
+                -1;
+        }
+
+        ActionsChanged?.Invoke();
+        SelectionChanged?.Invoke();
     }
 
     private void ClearActionButtons()
@@ -711,13 +834,6 @@ public class LocationPanel : MonoBehaviour
     private IEnumerator ScrollEntryToTopNextFrame(
         RectTransform entry)
     {
-        /*
-         * The action buttons have just been destroyed and new narrative
-         * content has just been created.
-         *
-         * Unity's layout system therefore needs to finish rebuilding
-         * before we calculate where the new "> Choice" entry actually is.
-         */
         yield return new WaitForEndOfFrame();
 
         if (entry == null ||
@@ -742,16 +858,6 @@ public class LocationPanel : MonoBehaviour
             yield break;
         }
 
-        /*
-         * Work in world coordinates here.
-         *
-         * GetWorldCorners:
-         *
-         * 0 = bottom-left
-         * 1 = top-left
-         * 2 = top-right
-         * 3 = bottom-right
-         */
         Vector3[] entryCorners =
             new Vector3[4];
 
@@ -770,18 +876,10 @@ public class LocationPanel : MonoBehaviour
         float viewportTop =
             viewportCorners[1].y;
 
-        /*
-         * Determine how far apart the top of the choice entry
-         * and the top of the viewport currently are.
-         */
         float worldDifference =
             viewportTop -
             entryTop;
 
-        /*
-         * anchoredPosition is in the content parent's local space,
-         * so convert the world-space distance into local-space distance.
-         */
         RectTransform contentParent =
             contentContainer.parent as RectTransform;
 
@@ -816,24 +914,12 @@ public class LocationPanel : MonoBehaviour
         Vector2 contentPosition =
             contentContainer.anchoredPosition;
 
-        /*
-         * Moving the content upward moves entries upward through
-         * the viewport.
-         */
         contentPosition.y +=
             localDifference;
 
         contentContainer.anchoredPosition =
             contentPosition;
 
-        /*
-         * Clamp the ScrollRect afterwards.
-         *
-         * If the selected choice is near the very end of all available
-         * content, Unity cannot physically place it at the top unless
-         * enough content exists below it. In that case the ScrollRect
-         * naturally stops at its valid limit.
-         */
         Canvas.ForceUpdateCanvases();
 
         scrollRect.StopMovement();
@@ -863,5 +949,44 @@ public class LocationPanel : MonoBehaviour
 
         scrollRect.verticalNormalizedPosition =
             1f;
+    }
+
+    private void EnsureGameState()
+    {
+        if (gameState != null)
+        {
+            return;
+        }
+
+        gameState =
+            FindFirstObjectByType<PlayerGameState>();
+
+        if (gameState == null)
+        {
+            Debug.LogError(
+                "LocationPanel could not find a PlayerGameState in the scene.",
+                this);
+        }
+    }
+
+    private int Mod(
+        int value,
+        int modulus)
+    {
+        if (modulus <= 0)
+        {
+            return 0;
+        }
+
+        int result =
+            value % modulus;
+
+        if (result < 0)
+        {
+            result +=
+                modulus;
+        }
+
+        return result;
     }
 }

@@ -17,6 +17,10 @@ MonoBehaviour:
   approach: 0
   description: You leave, knowing that someone or something lives here without anyone
     the wiser
+  requirements:
+  - rid: 3170748026750500943
+  effects:
+  - rid: 3170748026750500949
   move: {fileID: 0}
   strongHitText: 
   weakHitText: 
@@ -25,3 +29,18 @@ MonoBehaviour:
   strongHitFollowUpActions: []
   weakHitFollowUpActions: []
   missFollowUpActions: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 3170748026750500943
+      type: {class: ResourceCondition, ns: , asm: Assembly-CSharp}
+      data:
+        resource: {fileID: 11400000, guid: ccbb19576b30f1f4b9068b0277b4e994, type: 2}
+        comparison: 0
+        value: 0
+    - rid: 3170748026750500949
+      type: {class: ModifyResourceEffect, ns: , asm: Assembly-CSharp}
+      data:
+        resource: {fileID: 11400000, guid: ccbb19576b30f1f4b9068b0277b4e994, type: 2}
+        modification: 1
+        value: 1

@@ -17,6 +17,10 @@ MonoBehaviour:
   approach: 4
   description: Whatever it is knows nothing of you. You spot a good place to hide,
     when it returns you will have the edge.
+  requirements:
+  - rid: 3170747961440993525
+  effects:
+  - rid: 3170747961440993526
   move: {fileID: 0}
   strongHitText: 
   weakHitText: 
@@ -25,3 +29,16 @@ MonoBehaviour:
   strongHitFollowUpActions: []
   weakHitFollowUpActions: []
   missFollowUpActions: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 3170747961440993525
+      type: {class: FlagCondition, ns: , asm: Assembly-CSharp}
+      data:
+        flag: {fileID: 11400000, guid: 8e9169ab5c4057549bb0ef83af999115, type: 2}
+        requiredValue: 0
+    - rid: 3170747961440993526
+      type: {class: SetFlagEffect, ns: , asm: Assembly-CSharp}
+      data:
+        flag: {fileID: 11400000, guid: 8e9169ab5c4057549bb0ef83af999115, type: 2}
+        value: 1

@@ -17,6 +17,9 @@ MonoBehaviour:
   approach: 1
   description: You hear it, it hears you. Stand your ground and make you prescence
     known.
+  requirements:
+  - rid: 3170747961440993527
+  effects: []
   move: {fileID: 0}
   strongHitText: 
   weakHitText: 
@@ -25,3 +28,11 @@ MonoBehaviour:
   strongHitFollowUpActions: []
   weakHitFollowUpActions: []
   missFollowUpActions: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 3170747961440993527
+      type: {class: FlagCondition, ns: , asm: Assembly-CSharp}
+      data:
+        flag: {fileID: 0}
+        requiredValue: 1

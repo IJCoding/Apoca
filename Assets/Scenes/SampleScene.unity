@@ -1803,6 +1803,7 @@ MonoBehaviour:
   narrativeTextPrefab: {fileID: 5785544370353906631, guid: 41b9f219d91178443a1971f02aef5405, type: 3}
   scrollRect: {fileID: 729445322}
   actionButtonPrefab: {fileID: -8936293028243171270, guid: 85f564da24c68d34d800994ae444b285, type: 3}
+  gameState: {fileID: 0}
   moveResolver: {fileID: 1010165325}
 --- !u!114 &471226828
 MonoBehaviour:
@@ -2454,6 +2455,61 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 729445320}
   m_CullTransparentMesh: 1
+--- !u!1 &806565521
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 806565523}
+  - component: {fileID: 806565524}
+  m_Layer: 0
+  m_Name: GameState
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &806565523
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 806565521}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 733.09265, y: 260.7048, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &806565524
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 806565521}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8445e6a10f4a3a40978aa0b1911bb5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerGameState
+  knownFlags: []
+  knownResources:
+  - {fileID: 11400000, guid: ccbb19576b30f1f4b9068b0277b4e994, type: 2}
+  flagStates:
+  - flag: {fileID: 11400000, guid: 3dd00dacaa501de4381607ed94be2bef, type: 2}
+    value: 0
+  - flag: {fileID: 11400000, guid: 8e9169ab5c4057549bb0ef83af999115, type: 2}
+    value: 0
+  - flag: {fileID: 11400000, guid: e3b1e86ef9b040044998907908d1519b, type: 2}
+    value: 0
+  resourceStates: []
 --- !u!1 &872995001
 GameObject:
   m_ObjectHideFlags: 0
@@ -4960,3 +5016,4 @@ SceneRoots:
   - {fileID: 994262508}
   - {fileID: 1329420884}
   - {fileID: 1010165324}
+  - {fileID: 806565523}

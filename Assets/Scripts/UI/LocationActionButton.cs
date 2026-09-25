@@ -26,6 +26,7 @@ public class LocationActionButton : MonoBehaviour
     private LocationActionDefinition action;
 
     private bool isSelected;
+    private bool isAvailable = true;
 
     public LocationActionDefinition Action =>
         action;
@@ -33,32 +34,20 @@ public class LocationActionButton : MonoBehaviour
     public bool IsSelected =>
         isSelected;
 
+    public bool IsAvailable =>
+        isAvailable;
+
     public event Action<LocationActionDefinition> Selected;
 
     private void Awake()
     {
-        button =
-            GetComponent<Button>();
-
-        buttonImage =
-            GetComponent<Image>();
-
+        CacheComponents();
         RefreshVisual();
     }
 
     private void OnEnable()
     {
-        if (button == null)
-        {
-            button =
-                GetComponent<Button>();
-        }
-
-        if (buttonImage == null)
-        {
-            buttonImage =
-                GetComponent<Image>();
-        }
+        CacheComponents();
 
         button.onClick.AddListener(
             HandleButtonClicked);
@@ -84,6 +73,9 @@ public class LocationActionButton : MonoBehaviour
         isSelected =
             false;
 
+        isAvailable =
+            true;
+
         if (actionNameText != null)
         {
             actionNameText.text =
@@ -99,7 +91,22 @@ public class LocationActionButton : MonoBehaviour
         bool selected)
     {
         isSelected =
-            selected;
+            selected && isAvailable;
+
+        RefreshVisual();
+    }
+
+    public void SetAvailable(
+        bool available)
+    {
+        isAvailable =
+            available;
+
+        if (!isAvailable)
+        {
+            isSelected =
+                false;
+        }
 
         RefreshVisual();
     }
@@ -107,19 +114,11 @@ public class LocationActionButton : MonoBehaviour
     public void SetInteractable(
         bool interactable)
     {
-        if (button == null)
-        {
-            button =
-                GetComponent<Button>();
-        }
-
-        button.interactable =
-            interactable;
-
-        RefreshVisual();
+        SetAvailable(
+            interactable);
     }
 
-    private void RefreshVisual()
+    private void CacheComponents()
     {
         if (button == null)
         {
@@ -132,10 +131,20 @@ public class LocationActionButton : MonoBehaviour
             buttonImage =
                 GetComponent<Image>();
         }
+    }
+
+    private void RefreshVisual()
+    {
+        CacheComponents();
+
+        if (button != null)
+        {
+            button.interactable =
+                isAvailable;
+        }
 
         if (theme == null ||
-            buttonImage == null ||
-            button == null)
+            buttonImage == null)
         {
             return;
         }
@@ -149,7 +158,7 @@ public class LocationActionButton : MonoBehaviour
             theme.GetApproachStyle(
                 approach);
 
-        if (!button.interactable)
+        if (!isAvailable)
         {
             buttonImage.color =
                 style.DisabledColor;
@@ -183,6 +192,11 @@ public class LocationActionButton : MonoBehaviour
                 $"Location action button '{name}' was clicked without an action assigned.",
                 this);
 
+            return;
+        }
+
+        if (!isAvailable)
+        {
             return;
         }
 
