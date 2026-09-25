@@ -33,11 +33,23 @@ public class NarrativeGraphView : GraphView
     private const string MissFollowUpProperty =
         "missFollowUpActions";
 
+    private const string HideWhenRequirementsNotMetProperty =
+        "hideWhenRequirementsNotMet";
+
     private const string RequirementsProperty =
         "requirements";
 
     private const string EffectsProperty =
         "effects";
+
+    private const string StrongHitEffectsProperty =
+        "strongHitEffects";
+
+    private const string WeakHitEffectsProperty =
+        "weakHitEffects";
+
+    private const string MissEffectsProperty =
+        "missEffects";
 
     private LocationDefinition currentLocation;
     private GameUITheme currentTheme;
@@ -91,35 +103,6 @@ public class NarrativeGraphView : GraphView
 
         graphViewChanged =
             HandleGraphViewChanged;
-
-        RegisterCallback<AttachToPanelEvent>(
-            _ =>
-            {
-                EditorApplication.projectChanged -=
-                    HandleProjectChanged;
-
-                EditorApplication.projectChanged +=
-                    HandleProjectChanged;
-            });
-
-        RegisterCallback<DetachFromPanelEvent>(
-            _ =>
-            {
-                EditorApplication.projectChanged -=
-                    HandleProjectChanged;
-            });
-    }
-
-    private void HandleProjectChanged()
-    {
-        if (panel == null ||
-            currentLocation == null)
-        {
-            return;
-        }
-
-        LoadLocation(
-            currentLocation);
     }
 
     public void SetTheme(
@@ -1355,6 +1338,9 @@ public class NarrativeGraphView : GraphView
 
         private readonly VisualElement requirementsContainer;
         private readonly VisualElement effectsContainer;
+        private readonly VisualElement strongHitEffectsContainer;
+        private readonly VisualElement weakHitEffectsContainer;
+        private readonly VisualElement missEffectsContainer;
 
         private readonly System.Action<
             LocationActionDefinition> refreshRequested;
@@ -1485,6 +1471,49 @@ public class NarrativeGraphView : GraphView
 
             BuildEffectsUI();
 
+            if (action.RequiresMove &&
+                action.Move != null)
+            {
+                AddDivider();
+
+                strongHitEffectsContainer =
+                    new VisualElement();
+
+                extensionContainer.Add(
+                    strongHitEffectsContainer);
+
+                BuildEffectListUI(
+                    strongHitEffectsContainer,
+                    StrongHitEffectsProperty,
+                    "STRONG HIT EFFECTS");
+
+                AddDivider();
+
+                weakHitEffectsContainer =
+                    new VisualElement();
+
+                extensionContainer.Add(
+                    weakHitEffectsContainer);
+
+                BuildEffectListUI(
+                    weakHitEffectsContainer,
+                    WeakHitEffectsProperty,
+                    "WEAK HIT EFFECTS");
+
+                AddDivider();
+
+                missEffectsContainer =
+                    new VisualElement();
+
+                extensionContainer.Add(
+                    missEffectsContainer);
+
+                BuildEffectListUI(
+                    missEffectsContainer,
+                    MissEffectsProperty,
+                    "MISS EFFECTS");
+            }
+
             AddDivider();
 
             Button inspectButton =
@@ -1512,6 +1541,63 @@ public class NarrativeGraphView : GraphView
         private void BuildRequirementsUI()
         {
             requirementsContainer.Clear();
+
+            SerializedObject visibilitySerializedAction =
+                new SerializedObject(
+                    Action);
+
+            visibilitySerializedAction.Update();
+
+            SerializedProperty hideProperty =
+                visibilitySerializedAction.FindProperty(
+                    HideWhenRequirementsNotMetProperty);
+
+            if (hideProperty != null)
+            {
+                Toggle hideToggle =
+                    new Toggle(
+                        "Hide If Requirements Not Met")
+                    {
+                        value =
+                            hideProperty.boolValue
+                    };
+
+                hideToggle.RegisterValueChangedCallback(
+                    evt =>
+                    {
+                        SerializedObject serializedAction =
+                            new SerializedObject(
+                                Action);
+
+                        serializedAction.Update();
+
+                        SerializedProperty property =
+                            serializedAction.FindProperty(
+                                HideWhenRequirementsNotMetProperty);
+
+                        if (property == null)
+                        {
+                            return;
+                        }
+
+                        Undo.RecordObject(
+                            Action,
+                            "Change Action Visibility Requirement");
+
+                        property.boolValue =
+                            evt.newValue;
+
+                        serializedAction.ApplyModifiedProperties();
+
+                        EditorUtility.SetDirty(
+                            Action);
+
+                        AssetDatabase.SaveAssets();
+                    });
+
+                requirementsContainer.Add(
+                    hideToggle);
+            }
 
             Label heading =
                 CreateSectionHeading(
@@ -1572,6 +1658,16 @@ public class NarrativeGraphView : GraphView
                     requirementsContainer.Add(
                         row);
                 }
+                else if (element.managedReferenceValue is QuestCondition)
+                {
+                    VisualElement row =
+                        CreateQuestConditionRow(
+                            element,
+                            index);
+
+                    requirementsContainer.Add(
+                        row);
+                }
                 else
                 {
                     VisualElement row =
@@ -1626,6 +1722,20 @@ public class NarrativeGraphView : GraphView
 
             addButtons.Add(
                 addResourceButton);
+
+            Button addQuestButton =
+                new Button(
+                    AddQuestRequirement)
+                {
+                    text =
+                        "+ Quest Requirement"
+                };
+
+            addQuestButton.style.flexGrow =
+                1f;
+
+            addButtons.Add(
+                addQuestButton);
 
             requirementsContainer.Add(
                 addButtons);
@@ -2069,16 +2179,170 @@ public class NarrativeGraphView : GraphView
             return row;
         }
 
+        private VisualElement CreateQuestConditionRow(
+            SerializedProperty element,
+            int index)
+        {
+            VisualElement row =
+                CreateRuleRow();
+
+            SerializedProperty questProperty =
+                element.FindPropertyRelative(
+                    "quest");
+
+            SerializedProperty conditionProperty =
+                element.FindPropertyRelative(
+                    "condition");
+
+            SerializedProperty stageProperty =
+                element.FindPropertyRelative(
+                    "stageIndex");
+
+            ObjectField questField =
+                new ObjectField
+                {
+                    objectType =
+                        typeof(QuestDefinition),
+
+                    allowSceneObjects =
+                        false
+                };
+
+            questField.style.flexGrow =
+                1f;
+
+            questField.style.minWidth =
+                120f;
+
+            questField.SetValueWithoutNotify(
+                questProperty != null
+                    ? questProperty.objectReferenceValue
+                    : null);
+
+            questField.RegisterValueChangedCallback(
+                evt =>
+                {
+                    UpdateEffectObjectReference(
+                        RequirementsProperty,
+                        index,
+                        "quest",
+                        evt.newValue,
+                        "Change Quest Requirement");
+                });
+
+            QuestConditionMode initialCondition =
+                conditionProperty != null
+                    ? (QuestConditionMode)conditionProperty.enumValueIndex
+                    : QuestConditionMode.Active;
+
+            EnumField conditionField =
+                new EnumField(
+                    initialCondition);
+
+            conditionField.tooltip =
+                "Required quest state.";
+
+            conditionField.style.width =
+                110f;
+
+            conditionField.RegisterValueChangedCallback(
+                evt =>
+                {
+                    UpdateEffectEnum(
+                        RequirementsProperty,
+                        index,
+                        "condition",
+                        (int)(QuestConditionMode)evt.newValue,
+                        "Change Quest Requirement");
+
+                    refreshRequested?.Invoke(
+                        Action);
+                });
+
+            row.Add(
+                questField);
+
+            row.Add(
+                conditionField);
+
+            if (initialCondition == QuestConditionMode.AtStage ||
+                initialCondition == QuestConditionMode.AtOrAfterStage)
+            {
+                IntegerField stageField =
+                    new IntegerField();
+
+                stageField.tooltip =
+                    "Quest stage index.";
+
+                stageField.style.width =
+                    55f;
+
+                stageField.SetValueWithoutNotify(
+                    stageProperty != null
+                        ? stageProperty.intValue
+                        : 0);
+
+                stageField.RegisterValueChangedCallback(
+                    evt =>
+                    {
+                        UpdateEffectInteger(
+                            RequirementsProperty,
+                            index,
+                            "stageIndex",
+                            evt.newValue,
+                            "Change Quest Requirement Stage");
+                    });
+
+                row.Add(
+                    stageField);
+            }
+
+            Button removeButton =
+                new Button(
+                    () =>
+                    {
+                        RemoveManagedReference(
+                            RequirementsProperty,
+                            index,
+                            "Remove Quest Requirement");
+                    })
+                {
+                    text =
+                        "×"
+                };
+
+            removeButton.style.width =
+                24f;
+
+            row.Add(
+                removeButton);
+
+            return row;
+        }
+
         private void BuildEffectsUI()
         {
-            effectsContainer.Clear();
+            BuildEffectListUI(
+                effectsContainer,
+                EffectsProperty,
+                "EFFECTS");
+        }
 
-            Label heading =
+        private void BuildEffectListUI(
+            VisualElement container,
+            string propertyName,
+            string headingText)
+        {
+            if (container == null)
+            {
+                return;
+            }
+
+            container.Clear();
+
+            container.Add(
                 CreateSectionHeading(
-                    "EFFECTS");
-
-            effectsContainer.Add(
-                heading);
+                    headingText));
 
             SerializedObject serializedAction =
                 new SerializedObject(
@@ -2088,13 +2352,13 @@ public class NarrativeGraphView : GraphView
 
             SerializedProperty effects =
                 serializedAction.FindProperty(
-                    EffectsProperty);
+                    propertyName);
 
             if (effects == null)
             {
-                effectsContainer.Add(
+                container.Add(
                     new Label(
-                        "Missing effects property"));
+                        $"Missing {propertyName} property"));
 
                 return;
             }
@@ -2103,8 +2367,7 @@ public class NarrativeGraphView : GraphView
                  i < effects.arraySize;
                  i++)
             {
-                int index =
-                    i;
+                int index = i;
 
                 SerializedProperty element =
                     effects.GetArrayElementAtIndex(
@@ -2112,39 +2375,40 @@ public class NarrativeGraphView : GraphView
 
                 if (element.managedReferenceValue is SetFlagEffect)
                 {
-                    VisualElement row =
+                    container.Add(
                         CreateSetFlagEffectRow(
                             element,
-                            index);
-
-                    effectsContainer.Add(
-                        row);
+                            index,
+                            propertyName));
                 }
                 else if (element.managedReferenceValue is ModifyResourceEffect)
                 {
-                    VisualElement row =
+                    container.Add(
                         CreateModifyResourceEffectRow(
                             element,
-                            index);
-
-                    effectsContainer.Add(
-                        row);
+                            index,
+                            propertyName));
+                }
+                else if (element.managedReferenceValue is ModifyQuestEffect)
+                {
+                    container.Add(
+                        CreateModifyQuestEffectRow(
+                            element,
+                            index,
+                            propertyName));
                 }
                 else
                 {
-                    VisualElement row =
+                    container.Add(
                         CreateUnsupportedRow(
                             "Unknown Effect",
                             () =>
                             {
                                 RemoveManagedReference(
-                                    EffectsProperty,
+                                    propertyName,
                                     index,
-                                    "Remove Effect");
-                            });
-
-                    effectsContainer.Add(
-                        row);
+                                    $"Remove {headingText} Effect");
+                            }));
                 }
             }
 
@@ -2159,7 +2423,13 @@ public class NarrativeGraphView : GraphView
 
             Button addFlagButton =
                 new Button(
-                    AddSetFlagEffect)
+                    () =>
+                    {
+                        AddEffect(
+                            propertyName,
+                            new SetFlagEffect(),
+                            $"Add {headingText} Set Flag Effect");
+                    })
                 {
                     text =
                         "+ Set Flag"
@@ -2170,7 +2440,13 @@ public class NarrativeGraphView : GraphView
 
             Button addResourceButton =
                 new Button(
-                    AddModifyResourceEffect)
+                    () =>
+                    {
+                        AddEffect(
+                            propertyName,
+                            new ModifyResourceEffect(),
+                            $"Add {headingText} Resource Effect");
+                    })
                 {
                     text =
                         "+ Modify Resource"
@@ -2185,13 +2461,34 @@ public class NarrativeGraphView : GraphView
             addButtons.Add(
                 addResourceButton);
 
-            effectsContainer.Add(
+            Button addQuestButton =
+                new Button(
+                    () =>
+                    {
+                        AddEffect(
+                            propertyName,
+                            new ModifyQuestEffect(),
+                            $"Add {headingText} Quest Effect");
+                    })
+                {
+                    text =
+                        "+ Modify Quest"
+                };
+
+            addQuestButton.style.flexGrow =
+                1f;
+
+            addButtons.Add(
+                addQuestButton);
+
+            container.Add(
                 addButtons);
         }
 
         private VisualElement CreateSetFlagEffectRow(
             SerializedProperty element,
-            int index)
+            int index,
+            string propertyName)
         {
             VisualElement row =
                 CreateRuleRow();
@@ -2232,9 +2529,11 @@ public class NarrativeGraphView : GraphView
                         new SerializedObject(
                             Action);
 
+                    currentObject.Update();
+
                     SerializedProperty currentArray =
                         currentObject.FindProperty(
-                            EffectsProperty);
+                            propertyName);
 
                     if (currentArray == null ||
                         index < 0 ||
@@ -2300,9 +2599,11 @@ public class NarrativeGraphView : GraphView
                         new SerializedObject(
                             Action);
 
+                    currentObject.Update();
+
                     SerializedProperty currentArray =
                         currentObject.FindProperty(
-                            EffectsProperty);
+                            propertyName);
 
                     if (currentArray == null ||
                         index < 0 ||
@@ -2349,7 +2650,7 @@ public class NarrativeGraphView : GraphView
                     () =>
                     {
                         RemoveManagedReference(
-                            EffectsProperty,
+                            propertyName,
                             index,
                             "Remove Set Flag Effect");
                     })
@@ -2378,7 +2679,8 @@ public class NarrativeGraphView : GraphView
 
         private VisualElement CreateModifyResourceEffectRow(
             SerializedProperty element,
-            int index)
+            int index,
+            string propertyName)
         {
             VisualElement row =
                 CreateRuleRow();
@@ -2419,52 +2721,12 @@ public class NarrativeGraphView : GraphView
             resourceField.RegisterValueChangedCallback(
                 evt =>
                 {
-                    SerializedObject currentObject =
-                        new SerializedObject(
-                            Action);
-
-                    currentObject.Update();
-
-                    SerializedProperty currentArray =
-                        currentObject.FindProperty(
-                            EffectsProperty);
-
-                    if (currentArray == null ||
-                        index < 0 ||
-                        index >= currentArray.arraySize)
-                    {
-                        return;
-                    }
-
-                    SerializedProperty currentElement =
-                        currentArray.GetArrayElementAtIndex(
-                            index);
-
-                    SerializedProperty currentResource =
-                        currentElement.FindPropertyRelative(
-                            "resource");
-
-                    if (currentResource == null)
-                    {
-                        return;
-                    }
-
-                    Undo.RecordObject(
-                        Action,
+                    UpdateEffectObjectReference(
+                        propertyName,
+                        index,
+                        "resource",
+                        evt.newValue,
                         "Change Resource Effect");
-
-                    currentResource.objectReferenceValue =
-                        evt.newValue;
-
-                    currentObject.ApplyModifiedProperties();
-
-                    EditorUtility.SetDirty(
-                        Action);
-
-                    AssetDatabase.SaveAssets();
-
-                    refreshRequested?.Invoke(
-                        Action);
                 });
 
             ResourceModification initialModification =
@@ -2485,52 +2747,12 @@ public class NarrativeGraphView : GraphView
             modificationField.RegisterValueChangedCallback(
                 evt =>
                 {
-                    SerializedObject currentObject =
-                        new SerializedObject(
-                            Action);
-
-                    currentObject.Update();
-
-                    SerializedProperty currentArray =
-                        currentObject.FindProperty(
-                            EffectsProperty);
-
-                    if (currentArray == null ||
-                        index < 0 ||
-                        index >= currentArray.arraySize)
-                    {
-                        return;
-                    }
-
-                    SerializedProperty currentElement =
-                        currentArray.GetArrayElementAtIndex(
-                            index);
-
-                    SerializedProperty currentModification =
-                        currentElement.FindPropertyRelative(
-                            "modification");
-
-                    if (currentModification == null)
-                    {
-                        return;
-                    }
-
-                    Undo.RecordObject(
-                        Action,
+                    UpdateEffectEnum(
+                        propertyName,
+                        index,
+                        "modification",
+                        (int)(ResourceModification)evt.newValue,
                         "Change Resource Modification");
-
-                    currentModification.enumValueIndex =
-                        (int)(ResourceModification)evt.newValue;
-
-                    currentObject.ApplyModifiedProperties();
-
-                    EditorUtility.SetDirty(
-                        Action);
-
-                    AssetDatabase.SaveAssets();
-
-                    refreshRequested?.Invoke(
-                        Action);
                 });
 
             IntegerField valueField =
@@ -2550,52 +2772,12 @@ public class NarrativeGraphView : GraphView
             valueField.RegisterValueChangedCallback(
                 evt =>
                 {
-                    SerializedObject currentObject =
-                        new SerializedObject(
-                            Action);
-
-                    currentObject.Update();
-
-                    SerializedProperty currentArray =
-                        currentObject.FindProperty(
-                            EffectsProperty);
-
-                    if (currentArray == null ||
-                        index < 0 ||
-                        index >= currentArray.arraySize)
-                    {
-                        return;
-                    }
-
-                    SerializedProperty currentElement =
-                        currentArray.GetArrayElementAtIndex(
-                            index);
-
-                    SerializedProperty currentValue =
-                        currentElement.FindPropertyRelative(
-                            "value");
-
-                    if (currentValue == null)
-                    {
-                        return;
-                    }
-
-                    Undo.RecordObject(
-                        Action,
+                    UpdateEffectInteger(
+                        propertyName,
+                        index,
+                        "value",
+                        evt.newValue,
                         "Change Resource Effect Value");
-
-                    currentValue.intValue =
-                        evt.newValue;
-
-                    currentObject.ApplyModifiedProperties();
-
-                    EditorUtility.SetDirty(
-                        Action);
-
-                    AssetDatabase.SaveAssets();
-
-                    refreshRequested?.Invoke(
-                        Action);
                 });
 
             Button removeButton =
@@ -2603,7 +2785,7 @@ public class NarrativeGraphView : GraphView
                     () =>
                     {
                         RemoveManagedReference(
-                            EffectsProperty,
+                            propertyName,
                             index,
                             "Remove Resource Effect");
                     })
@@ -2628,6 +2810,303 @@ public class NarrativeGraphView : GraphView
                 removeButton);
 
             return row;
+        }
+
+        private VisualElement CreateModifyQuestEffectRow(
+            SerializedProperty element,
+            int index,
+            string propertyName)
+        {
+            VisualElement row =
+                CreateRuleRow();
+
+            SerializedProperty questProperty =
+                element.FindPropertyRelative(
+                    "quest");
+
+            SerializedProperty modificationProperty =
+                element.FindPropertyRelative(
+                    "modification");
+
+            SerializedProperty stageProperty =
+                element.FindPropertyRelative(
+                    "stageIndex");
+
+            ObjectField questField =
+                new ObjectField
+                {
+                    objectType =
+                        typeof(QuestDefinition),
+
+                    allowSceneObjects =
+                        false
+                };
+
+            questField.style.flexGrow =
+                1f;
+
+            questField.style.minWidth =
+                120f;
+
+            questField.SetValueWithoutNotify(
+                questProperty != null
+                    ? questProperty.objectReferenceValue
+                    : null);
+
+            questField.RegisterValueChangedCallback(
+                evt =>
+                {
+                    UpdateEffectObjectReference(
+                        propertyName,
+                        index,
+                        "quest",
+                        evt.newValue,
+                        "Change Quest Effect");
+                });
+
+            QuestModification initialModification =
+                modificationProperty != null
+                    ? (QuestModification)modificationProperty.enumValueIndex
+                    : QuestModification.Start;
+
+            EnumField modificationField =
+                new EnumField(
+                    initialModification);
+
+            modificationField.tooltip =
+                "How this effect changes the quest.";
+
+            modificationField.style.width =
+                100f;
+
+            modificationField.RegisterValueChangedCallback(
+                evt =>
+                {
+                    UpdateEffectEnum(
+                        propertyName,
+                        index,
+                        "modification",
+                        (int)(QuestModification)evt.newValue,
+                        "Change Quest Modification");
+
+                    refreshRequested?.Invoke(
+                        Action);
+                });
+
+            row.Add(
+                questField);
+
+            row.Add(
+                modificationField);
+
+            if (initialModification == QuestModification.SetStage)
+            {
+                IntegerField stageField =
+                    new IntegerField();
+
+                stageField.tooltip =
+                    "Quest stage index.";
+
+                stageField.style.width =
+                    55f;
+
+                stageField.SetValueWithoutNotify(
+                    stageProperty != null
+                        ? stageProperty.intValue
+                        : 0);
+
+                stageField.RegisterValueChangedCallback(
+                    evt =>
+                    {
+                        UpdateEffectInteger(
+                            propertyName,
+                            index,
+                            "stageIndex",
+                            evt.newValue,
+                            "Change Quest Effect Stage");
+                    });
+
+                row.Add(
+                    stageField);
+            }
+
+            Button removeButton =
+                new Button(
+                    () =>
+                    {
+                        RemoveManagedReference(
+                            propertyName,
+                            index,
+                            "Remove Quest Effect");
+                    })
+                {
+                    text =
+                        "×"
+                };
+
+            removeButton.style.width =
+                24f;
+
+            row.Add(
+                removeButton);
+
+            return row;
+        }
+
+        private void UpdateEffectObjectReference(
+            string propertyName,
+            int index,
+            string relativePropertyName,
+            Object value,
+            string undoName)
+        {
+            SerializedObject currentObject =
+                new SerializedObject(
+                    Action);
+
+            currentObject.Update();
+
+            SerializedProperty currentArray =
+                currentObject.FindProperty(
+                    propertyName);
+
+            if (currentArray == null ||
+                index < 0 ||
+                index >= currentArray.arraySize)
+            {
+                return;
+            }
+
+            SerializedProperty currentElement =
+                currentArray.GetArrayElementAtIndex(
+                    index);
+
+            SerializedProperty currentProperty =
+                currentElement.FindPropertyRelative(
+                    relativePropertyName);
+
+            if (currentProperty == null)
+            {
+                return;
+            }
+
+            Undo.RecordObject(
+                Action,
+                undoName);
+
+            currentProperty.objectReferenceValue =
+                value;
+
+            currentObject.ApplyModifiedProperties();
+
+            EditorUtility.SetDirty(
+                Action);
+
+            AssetDatabase.SaveAssets();
+        }
+
+        private void UpdateEffectEnum(
+            string propertyName,
+            int index,
+            string relativePropertyName,
+            int value,
+            string undoName)
+        {
+            SerializedObject currentObject =
+                new SerializedObject(
+                    Action);
+
+            currentObject.Update();
+
+            SerializedProperty currentArray =
+                currentObject.FindProperty(
+                    propertyName);
+
+            if (currentArray == null ||
+                index < 0 ||
+                index >= currentArray.arraySize)
+            {
+                return;
+            }
+
+            SerializedProperty currentElement =
+                currentArray.GetArrayElementAtIndex(
+                    index);
+
+            SerializedProperty currentProperty =
+                currentElement.FindPropertyRelative(
+                    relativePropertyName);
+
+            if (currentProperty == null)
+            {
+                return;
+            }
+
+            Undo.RecordObject(
+                Action,
+                undoName);
+
+            currentProperty.enumValueIndex =
+                value;
+
+            currentObject.ApplyModifiedProperties();
+
+            EditorUtility.SetDirty(
+                Action);
+
+            AssetDatabase.SaveAssets();
+        }
+
+        private void UpdateEffectInteger(
+            string propertyName,
+            int index,
+            string relativePropertyName,
+            int value,
+            string undoName)
+        {
+            SerializedObject currentObject =
+                new SerializedObject(
+                    Action);
+
+            currentObject.Update();
+
+            SerializedProperty currentArray =
+                currentObject.FindProperty(
+                    propertyName);
+
+            if (currentArray == null ||
+                index < 0 ||
+                index >= currentArray.arraySize)
+            {
+                return;
+            }
+
+            SerializedProperty currentElement =
+                currentArray.GetArrayElementAtIndex(
+                    index);
+
+            SerializedProperty currentProperty =
+                currentElement.FindPropertyRelative(
+                    relativePropertyName);
+
+            if (currentProperty == null)
+            {
+                return;
+            }
+
+            Undo.RecordObject(
+                Action,
+                undoName);
+
+            currentProperty.intValue =
+                value;
+
+            currentObject.ApplyModifiedProperties();
+
+            EditorUtility.SetDirty(
+                Action);
+
+            AssetDatabase.SaveAssets();
         }
 
         private void AddFlagRequirement()
@@ -2726,7 +3205,7 @@ public class NarrativeGraphView : GraphView
                 Action);
         }
 
-        private void AddSetFlagEffect()
+        private void AddQuestRequirement()
         {
             SerializedObject serializedAction =
                 new SerializedObject(
@@ -2734,34 +3213,34 @@ public class NarrativeGraphView : GraphView
 
             serializedAction.Update();
 
-            SerializedProperty effects =
+            SerializedProperty requirements =
                 serializedAction.FindProperty(
-                    EffectsProperty);
+                    RequirementsProperty);
 
-            if (effects == null)
+            if (requirements == null)
             {
                 Debug.LogError(
-                    $"Narrative Graph could not find '{EffectsProperty}' on '{Action.name}'.");
+                    $"Narrative Graph could not find '{RequirementsProperty}' on '{Action.name}'.");
 
                 return;
             }
 
             Undo.RecordObject(
                 Action,
-                "Add Set Flag Effect");
+                "Add Quest Requirement");
 
             int index =
-                effects.arraySize;
+                requirements.arraySize;
 
-            effects.InsertArrayElementAtIndex(
+            requirements.InsertArrayElementAtIndex(
                 index);
 
             SerializedProperty element =
-                effects.GetArrayElementAtIndex(
+                requirements.GetArrayElementAtIndex(
                     index);
 
             element.managedReferenceValue =
-                new SetFlagEffect();
+                new QuestCondition();
 
             serializedAction.ApplyModifiedProperties();
 
@@ -2774,7 +3253,10 @@ public class NarrativeGraphView : GraphView
                 Action);
         }
 
-        private void AddModifyResourceEffect()
+        private void AddEffect(
+            string propertyName,
+            GameEffect effect,
+            string undoName)
         {
             SerializedObject serializedAction =
                 new SerializedObject(
@@ -2784,19 +3266,19 @@ public class NarrativeGraphView : GraphView
 
             SerializedProperty effects =
                 serializedAction.FindProperty(
-                    EffectsProperty);
+                    propertyName);
 
             if (effects == null)
             {
                 Debug.LogError(
-                    $"Narrative Graph could not find '{EffectsProperty}' on '{Action.name}'.");
+                    $"Narrative Graph could not find '{propertyName}' on '{Action.name}'.");
 
                 return;
             }
 
             Undo.RecordObject(
                 Action,
-                "Add Modify Resource Effect");
+                undoName);
 
             int index =
                 effects.arraySize;
@@ -2809,7 +3291,7 @@ public class NarrativeGraphView : GraphView
                     index);
 
             element.managedReferenceValue =
-                new ModifyResourceEffect();
+                effect;
 
             serializedAction.ApplyModifiedProperties();
 

@@ -430,6 +430,16 @@ public class LocationPanel : MonoBehaviour
                     continue;
                 }
 
+                bool isAvailable =
+                    action.AreRequirementsMet(
+                        gameState);
+
+                if (!isAvailable &&
+                    action.HideWhenRequirementsNotMet)
+                {
+                    continue;
+                }
+
                 if (actionButtonPrefab == null ||
                     contentContainer == null)
                 {
@@ -447,10 +457,6 @@ public class LocationPanel : MonoBehaviour
 
                 actionButton.SetAction(
                     action);
-
-                bool isAvailable =
-                    action.AreRequirementsMet(
-                        gameState);
 
                 actionButton.SetAvailable(
                     isAvailable);
@@ -522,11 +528,11 @@ public class LocationPanel : MonoBehaviour
         }
 
         /*
-         * Apply the action's game-state effects before creating its
-         * follow-up choices.
+         * Apply the action's general game-state effects before resolving
+         * the action and before creating its follow-up choices.
          *
-         * This means a flag changed by this action can immediately
-         * affect which follow-up actions are available.
+         * Move-result-specific effects are applied separately after the
+         * move result has been determined.
          */
         action.ApplyEffects(
             gameState);
@@ -586,6 +592,17 @@ public class LocationPanel : MonoBehaviour
         MoveResolution resolution =
             moveResolver.Resolve(
                 move);
+
+        /*
+         * Apply the effects belonging specifically to the rolled result.
+         *
+         * This happens before the result narrative and follow-up actions
+         * are created so that those follow-up actions evaluate their
+         * requirements against the newly updated game state.
+         */
+        action.ApplyResultEffects(
+            resolution.Result,
+            gameState);
 
         AppendMoveRoll(
             move,
@@ -666,11 +683,19 @@ public class LocationPanel : MonoBehaviour
                 actionButton.Action.AreRequirementsMet(
                     gameState);
 
+            bool shouldBeVisible =
+                isAvailable ||
+                !actionButton.Action.HideWhenRequirementsNotMet;
+
+            actionButton.gameObject.SetActive(
+                shouldBeVisible);
+
             actionButton.SetAvailable(
                 isAvailable);
 
             if (i == selectedActionIndex &&
-                !isAvailable)
+                (!isAvailable ||
+                 !shouldBeVisible))
             {
                 selectedActionBecameUnavailable =
                     true;

@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 986eadabb3dc3c845bf6bc2ace117589, type: 3}
-  m_Name: BrowseMarketStalls
+  m_Name: UnalignedAction
   m_EditorClassIdentifier: Assembly-CSharp::LocationActionDefinition
-  actionId: browse_market_stalls
-  displayName: Browse The Market Stalls
+  actionId: 
+  displayName: 
   approach: 0
-  description: Browse the market stalls
+  description: 
   requirements: []
   effects: []
   move: {fileID: 0}
@@ -25,8 +25,7 @@ MonoBehaviour:
   weakHitEffects: []
   missText: 
   missEffects: []
-  followUpActions:
-  - {fileID: 11400000, guid: 1b1d02bc2a892d147b133735cdd2f991, type: 2}
+  followUpActions: []
   strongHitFollowUpActions: []
   weakHitFollowUpActions: []
   missFollowUpActions: []

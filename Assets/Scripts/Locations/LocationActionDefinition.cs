@@ -10,115 +10,109 @@ public class LocationActionDefinition : ScriptableObject
     [Header("Identity")]
 
     [SerializeField]
-    [Tooltip("A stable identifier used to distinguish this action from other actions.")]
     private string actionId;
 
     [SerializeField]
-    [Tooltip("The text displayed to the player when this action is presented as a choice.")]
     private string displayName;
 
     [SerializeField]
-    [Tooltip("The thematic approach this action belongs to. None is used for general actions such as Leave or Continue.")]
-    private ActionApproach approach;
+    private ActionApproach approach = ActionApproach.None;
 
     [Header("Narrative")]
 
     [SerializeField]
-    [TextArea(3, 8)]
-    [Tooltip("The narrative text displayed when this action does not require a move.")]
+    [TextArea(2, 8)]
     private string description;
 
-    [Header("Game State Requirements")]
+    [Header("Requirements")]
+
+    [SerializeField]
+    [Tooltip("When enabled, this action is completely hidden while any requirement is unmet. When disabled, the action remains visible but unavailable.")]
+    private bool hideWhenRequirementsNotMet;
 
     [SerializeReference]
-    [Tooltip("Every requirement in this list must be met before this action can be selected.")]
     private List<GameCondition> requirements =
         new List<GameCondition>();
 
-    [Header("Game State Effects")]
+    [Header("Effects")]
 
     [SerializeReference]
-    [Tooltip("Effects applied when this action is selected.")]
     private List<GameEffect> effects =
         new List<GameEffect>();
 
     [Header("Move")]
 
     [SerializeField]
-    [Tooltip("Optional move resolved when this action is selected. Leave empty if this action does not require a move.")]
     private MoveDefinition move;
 
+    [Header("Move Result Text")]
+
     [SerializeField]
-    [TextArea(3, 8)]
-    [Tooltip("Narrative displayed when the move produces a Strong Hit.")]
+    [TextArea(2, 8)]
     private string strongHitText;
 
     [SerializeField]
-    [TextArea(3, 8)]
-    [Tooltip("Narrative displayed when the move produces a Weak Hit.")]
+    [TextArea(2, 8)]
     private string weakHitText;
 
     [SerializeField]
-    [TextArea(3, 8)]
-    [Tooltip("Narrative displayed when the move produces a Miss.")]
+    [TextArea(2, 8)]
     private string missText;
 
-    [Header("Standard Follow-Up Actions")]
+    [Header("Move Result Effects")]
+
+    [SerializeReference]
+    private List<GameEffect> strongHitEffects =
+        new List<GameEffect>();
+
+    [SerializeReference]
+    private List<GameEffect> weakHitEffects =
+        new List<GameEffect>();
+
+    [SerializeReference]
+    private List<GameEffect> missEffects =
+        new List<GameEffect>();
+
+    [Header("Follow-Up Actions")]
 
     [SerializeField]
-    [Tooltip("Actions presented after this action when no move is required.")]
     private LocationActionDefinition[] followUpActions =
         Array.Empty<LocationActionDefinition>();
 
-    [Header("Move Result Follow-Up Actions")]
-
     [SerializeField]
-    [Tooltip("Actions presented after a Strong Hit.")]
     private LocationActionDefinition[] strongHitFollowUpActions =
         Array.Empty<LocationActionDefinition>();
 
     [SerializeField]
-    [Tooltip("Actions presented after a Weak Hit.")]
     private LocationActionDefinition[] weakHitFollowUpActions =
         Array.Empty<LocationActionDefinition>();
 
     [SerializeField]
-    [Tooltip("Actions presented after a Miss.")]
     private LocationActionDefinition[] missFollowUpActions =
         Array.Empty<LocationActionDefinition>();
 
-    public string ActionId =>
-        actionId;
+    public string ActionId => actionId;
+    public string DisplayName => displayName;
+    public ActionApproach Approach => approach;
+    public string Description => description;
 
-    public string DisplayName =>
-        displayName;
-
-    public string Description =>
-        description;
-
-    public MoveDefinition Move =>
-        move;
-
-    public bool RequiresMove =>
-        move != null;
-
-    public string StrongHitText =>
-        strongHitText;
-
-    public string WeakHitText =>
-        weakHitText;
-
-    public string MissText =>
-        missText;
-
-    public ActionApproach Approach =>
-        approach;
+    public bool HideWhenRequirementsNotMet =>
+        hideWhenRequirementsNotMet;
 
     public IReadOnlyList<GameCondition> Requirements =>
         requirements;
 
     public IReadOnlyList<GameEffect> Effects =>
         effects;
+
+    public MoveDefinition Move => move;
+
+    public bool RequiresMove =>
+        move != null;
+
+    public string StrongHitText => strongHitText;
+    public string WeakHitText => weakHitText;
+    public string MissText => missText;
 
     public LocationActionDefinition[] FollowUpActions =>
         followUpActions;
@@ -140,7 +134,7 @@ public class LocationActionDefinition : ScriptableObject
             }
 
             if (!requirement.IsMet(
-                gameState))
+                    gameState))
             {
                 return false;
             }
@@ -152,20 +146,34 @@ public class LocationActionDefinition : ScriptableObject
     public void ApplyEffects(
         PlayerGameState gameState)
     {
-        if (effects == null)
-        {
-            return;
-        }
+        ApplyEffectList(
+            effects,
+            gameState);
+    }
 
-        foreach (GameEffect effect in effects)
+    public void ApplyResultEffects(
+        MoveResult result,
+        PlayerGameState gameState)
+    {
+        switch (result)
         {
-            if (effect == null)
-            {
-                continue;
-            }
+            case MoveResult.StrongHit:
+                ApplyEffectList(
+                    strongHitEffects,
+                    gameState);
+                break;
 
-            effect.Apply(
-                gameState);
+            case MoveResult.WeakHit:
+                ApplyEffectList(
+                    weakHitEffects,
+                    gameState);
+                break;
+
+            case MoveResult.Miss:
+                ApplyEffectList(
+                    missEffects,
+                    gameState);
+                break;
         }
     }
 
@@ -184,10 +192,6 @@ public class LocationActionDefinition : ScriptableObject
                 return missText;
 
             default:
-                Debug.LogWarning(
-                    $"LocationActionDefinition '{name}' received unsupported MoveResult '{result}'.",
-                    this);
-
                 return string.Empty;
         }
     }
@@ -207,11 +211,28 @@ public class LocationActionDefinition : ScriptableObject
                 return missFollowUpActions;
 
             default:
-                Debug.LogWarning(
-                    $"LocationActionDefinition '{name}' received unsupported MoveResult '{result}'.",
-                    this);
-
                 return Array.Empty<LocationActionDefinition>();
+        }
+    }
+
+    private static void ApplyEffectList(
+        List<GameEffect> effectList,
+        PlayerGameState gameState)
+    {
+        if (effectList == null)
+        {
+            return;
+        }
+
+        foreach (GameEffect effect in effectList)
+        {
+            if (effect == null)
+            {
+                continue;
+            }
+
+            effect.Apply(
+                gameState);
         }
     }
 }

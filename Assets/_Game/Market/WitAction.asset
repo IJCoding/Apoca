@@ -10,14 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 986eadabb3dc3c845bf6bc2ace117589, type: 3}
-  m_Name: BrowseMarketStalls
+  m_Name: WitAction
   m_EditorClassIdentifier: Assembly-CSharp::LocationActionDefinition
-  actionId: browse_market_stalls
-  displayName: Browse The Market Stalls
-  approach: 0
-  description: Browse the market stalls
+  actionId: Think where he could be
+  displayName: Think where he could be
+  approach: 2
+  description: Hmm maybe I should look in the market
   requirements: []
-  effects: []
+  effects:
+  - rid: 3170748026750500967
   move: {fileID: 0}
   strongHitText: 
   strongHitEffects: []
@@ -25,11 +26,16 @@ MonoBehaviour:
   weakHitEffects: []
   missText: 
   missEffects: []
-  followUpActions:
-  - {fileID: 11400000, guid: 1b1d02bc2a892d147b133735cdd2f991, type: 2}
+  followUpActions: []
   strongHitFollowUpActions: []
   weakHitFollowUpActions: []
   missFollowUpActions: []
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 3170748026750500967
+      type: {class: ModifyQuestEffect, ns: , asm: Assembly-CSharp}
+      data:
+        quest: {fileID: 11400000, guid: 0348f2e6613fe6c4e8cdca54b031cf34, type: 2}
+        modification: 1
+        stageIndex: 0

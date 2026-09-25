@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 986eadabb3dc3c845bf6bc2ace117589, type: 3}
+  m_Name: UnalignedAction
+  m_EditorClassIdentifier: Assembly-CSharp::LocationActionDefinition
+  actionId: FindTHEM
+  displayName: find THEM
+  approach: 0
+  description: Find Them
+  hideWhenRequirementsNotMet: 1
+  requirements:
+  - rid: 3170748026750500974
+  effects:
+  - rid: 3170748026750500975
+  move: {fileID: 0}
+  strongHitText: 
+  weakHitText: 
+  missText: 
+  strongHitEffects: []
+  weakHitEffects: []
+  missEffects: []
+  followUpActions: []
+  strongHitFollowUpActions: []
+  weakHitFollowUpActions: []
+  missFollowUpActions: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 3170748026750500974
+      type: {class: QuestCondition, ns: , asm: Assembly-CSharp}
+      data:
+        quest: {fileID: 11400000, guid: 0348f2e6613fe6c4e8cdca54b031cf34, type: 2}
+        condition: 1
+        stageIndex: 0
+    - rid: 3170748026750500975
+      type: {class: ModifyQuestEffect, ns: , asm: Assembly-CSharp}
+      data:
+        quest: {fileID: 11400000, guid: 0348f2e6613fe6c4e8cdca54b031cf34, type: 2}
+        modification: 3
+        stageIndex: 0

@@ -14,4 +14,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LocationActionDefinition
   actionId: talk_to_market_trader
   displayName: Talk To Market Trader
+  approach: 0
   description: Talk to the market trader
+  requirements: []
+  effects: []
+  move: {fileID: 0}
+  strongHitText: 
+  strongHitEffects: []
+  weakHitText: 
+  weakHitEffects: []
+  missText: 
+  missEffects: []
+  followUpActions:
+  - {fileID: 11400000, guid: 7b631dc40cc2bfb409eae0e183364070, type: 2}
+  strongHitFollowUpActions: []
+  weakHitFollowUpActions: []
+  missFollowUpActions: []
+  references:
+    version: 2
+    RefIds: []

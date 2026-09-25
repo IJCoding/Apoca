@@ -9,10 +9,15 @@ public class LocationActionDefinitionEditor : Editor
     private SerializedProperty approach;
     private SerializedProperty description;
 
+    private SerializedProperty hideWhenRequirementsNotMet;
     private SerializedProperty requirements;
     private SerializedProperty effects;
 
     private SerializedProperty move;
+
+    private SerializedProperty strongHitEffects;
+    private SerializedProperty weakHitEffects;
+    private SerializedProperty missEffects;
 
     private SerializedProperty strongHitText;
     private SerializedProperty weakHitText;
@@ -41,6 +46,10 @@ public class LocationActionDefinitionEditor : Editor
             serializedObject.FindProperty(
                 "description");
 
+        hideWhenRequirementsNotMet =
+            serializedObject.FindProperty(
+                "hideWhenRequirementsNotMet");
+
         requirements =
             serializedObject.FindProperty(
                 "requirements");
@@ -52,6 +61,18 @@ public class LocationActionDefinitionEditor : Editor
         move =
             serializedObject.FindProperty(
                 "move");
+
+        strongHitEffects =
+            serializedObject.FindProperty(
+                "strongHitEffects");
+
+        weakHitEffects =
+            serializedObject.FindProperty(
+                "weakHitEffects");
+
+        missEffects =
+            serializedObject.FindProperty(
+                "missEffects");
 
         strongHitText =
             serializedObject.FindProperty(
@@ -100,17 +121,23 @@ public class LocationActionDefinitionEditor : Editor
         }
         else
         {
-            DrawActionArray(
-                strongHitFollowUpActions,
-                "Strong Hit Follow-Up Actions");
+            DrawMoveOutcomeSection(
+                "Strong Hit",
+                strongHitText,
+                strongHitEffects,
+                strongHitFollowUpActions);
 
-            DrawActionArray(
-                weakHitFollowUpActions,
-                "Weak Hit Follow-Up Actions");
+            DrawMoveOutcomeSection(
+                "Weak Hit",
+                weakHitText,
+                weakHitEffects,
+                weakHitFollowUpActions);
 
-            DrawActionArray(
-                missFollowUpActions,
-                "Miss Follow-Up Actions");
+            DrawMoveOutcomeSection(
+                "Miss",
+                missText,
+                missEffects,
+                missFollowUpActions);
         }
 
         serializedObject.ApplyModifiedProperties();
@@ -155,6 +182,22 @@ public class LocationActionDefinitionEditor : Editor
         EditorGUILayout.HelpBox(
             "Every requirement must be met for this action to be available.",
             MessageType.Info);
+
+        if (hideWhenRequirementsNotMet != null)
+        {
+            EditorGUILayout.PropertyField(
+                hideWhenRequirementsNotMet,
+                new GUIContent(
+                    "Hide If Requirements Not Met"));
+        }
+        else
+        {
+            EditorGUILayout.HelpBox(
+                "The serialized 'hideWhenRequirementsNotMet' property could not be found.",
+                MessageType.Warning);
+        }
+
+        EditorGUILayout.Space();
 
         if (requirements == null)
         {
@@ -221,6 +264,14 @@ public class LocationActionDefinitionEditor : Editor
             AddManagedReference(
                 requirements,
                 new ResourceCondition());
+        }
+
+        if (GUILayout.Button(
+            "+ Add Quest Requirement"))
+        {
+            AddManagedReference(
+                requirements,
+                new QuestCondition());
         }
 
         EditorGUILayout.EndHorizontal();
@@ -305,6 +356,14 @@ public class LocationActionDefinitionEditor : Editor
                 new ModifyResourceEffect());
         }
 
+        if (GUILayout.Button(
+            "+ Add Modify Quest Effect"))
+        {
+            AddManagedReference(
+                effects,
+                new ModifyQuestEffect());
+        }
+
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space();
@@ -319,17 +378,125 @@ public class LocationActionDefinitionEditor : Editor
         EditorGUILayout.PropertyField(
             move);
 
-        if (move.objectReferenceValue != null)
+        EditorGUILayout.Space();
+    }
+
+    private void DrawMoveOutcomeSection(
+        string outcomeName,
+        SerializedProperty textProperty,
+        SerializedProperty effectsProperty,
+        SerializedProperty followUpActionsProperty)
+    {
+        EditorGUILayout.LabelField(
+            outcomeName,
+            EditorStyles.boldLabel);
+
+        EditorGUILayout.PropertyField(
+            textProperty,
+            new GUIContent(
+                $"{outcomeName} Text"));
+
+        DrawEffectList(
+            effectsProperty,
+            $"{outcomeName} Effects",
+            $"Effects applied when the move produces a {outcomeName}.");
+
+        DrawActionArray(
+            followUpActionsProperty,
+            $"{outcomeName} Follow-Up Actions");
+    }
+
+    private void DrawEffectList(
+        SerializedProperty effectsProperty,
+        string label,
+        string helpText)
+    {
+        EditorGUILayout.LabelField(
+            label,
+            EditorStyles.boldLabel);
+
+        EditorGUILayout.HelpBox(
+            helpText,
+            MessageType.Info);
+
+        if (effectsProperty == null)
         {
-            EditorGUILayout.PropertyField(
-                strongHitText);
+            EditorGUILayout.HelpBox(
+                $"The serialized '{label}' property could not be found.",
+                MessageType.Error);
 
-            EditorGUILayout.PropertyField(
-                weakHitText);
+            EditorGUILayout.Space();
 
-            EditorGUILayout.PropertyField(
-                missText);
+            return;
         }
+
+        for (int i = 0;
+             i < effectsProperty.arraySize;
+             i++)
+        {
+            SerializedProperty element =
+                effectsProperty.GetArrayElementAtIndex(
+                    i);
+
+            EditorGUILayout.BeginVertical(
+                EditorStyles.helpBox);
+
+            EditorGUILayout.BeginHorizontal();
+
+            EditorGUILayout.LabelField(
+                $"Effect {i + 1}",
+                EditorStyles.boldLabel);
+
+            if (GUILayout.Button(
+                "Remove",
+                GUILayout.Width(65f)))
+            {
+                effectsProperty.DeleteArrayElementAtIndex(
+                    i);
+
+                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.EndVertical();
+
+                break;
+            }
+
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.PropertyField(
+                element,
+                GUIContent.none,
+                true);
+
+            EditorGUILayout.EndVertical();
+        }
+
+        EditorGUILayout.BeginHorizontal();
+
+        if (GUILayout.Button(
+            "+ Add Set Flag Effect"))
+        {
+            AddManagedReference(
+                effectsProperty,
+                new SetFlagEffect());
+        }
+
+        if (GUILayout.Button(
+            "+ Add Modify Resource Effect"))
+        {
+            AddManagedReference(
+                effectsProperty,
+                new ModifyResourceEffect());
+        }
+
+        if (GUILayout.Button(
+            "+ Add Modify Quest Effect"))
+        {
+            AddManagedReference(
+                effectsProperty,
+                new ModifyQuestEffect());
+        }
+
+        EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.Space();
     }

@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 986eadabb3dc3c845bf6bc2ace117589, type: 3}
+  m_Name: Gamble
+  m_EditorClassIdentifier: Assembly-CSharp::LocationActionDefinition
+  actionId: 
+  displayName: Gamble
+  approach: 5
+  description: You see a small game of chance and decide to partake
+  requirements:
+  - rid: 3170748026750500954
+  effects:
+  - rid: 3170748026750500961
+  move: {fileID: 11400000, guid: a3144efbfe2592a4e99ff31cd9da9576, type: 2}
+  strongHitText: YOU WIN BIG
+  strongHitEffects:
+  - rid: 3170748026750500960
+  weakHitText: You broke even
+  weakHitEffects:
+  - rid: 3170748026750500958
+  missText: You win nothing
+  missEffects: []
+  followUpActions:
+  - {fileID: 11400000}
+  strongHitFollowUpActions: []
+  weakHitFollowUpActions: []
+  missFollowUpActions: []
+  references:
+    version: 2
+    RefIds:
+    - rid: 3170748026750500954
+      type: {class: ResourceCondition, ns: , asm: Assembly-CSharp}
+      data:
+        resource: {fileID: 11400000, guid: ccbb19576b30f1f4b9068b0277b4e994, type: 2}
+        comparison: 3
+        value: 5
+    - rid: 3170748026750500958
+      type: {class: ModifyResourceEffect, ns: , asm: Assembly-CSharp}
+      data:
+        resource: {fileID: 11400000, guid: ccbb19576b30f1f4b9068b0277b4e994, type: 2}
+        modification: 0
+        value: 5
+    - rid: 3170748026750500960
+      type: {class: ModifyResourceEffect, ns: , asm: Assembly-CSharp}
+      data:
+        resource: {fileID: 11400000, guid: ccbb19576b30f1f4b9068b0277b4e994, type: 2}
+        modification: 0
+        value: 10
+    - rid: 3170748026750500961
+      type: {class: ModifyResourceEffect, ns: , asm: Assembly-CSharp}
+      data:
+        resource: {fileID: 11400000, guid: ccbb19576b30f1f4b9068b0277b4e994, type: 2}
+        modification: 1
+        value: 5

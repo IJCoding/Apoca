@@ -10,13 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 986eadabb3dc3c845bf6bc2ace117589, type: 3}
-  m_Name: BrowseMarketStalls
+  m_Name: Find The Merchant
   m_EditorClassIdentifier: Assembly-CSharp::LocationActionDefinition
-  actionId: browse_market_stalls
-  displayName: Browse The Market Stalls
+  actionId: 'Look for them '
+  displayName: Look for them
   approach: 0
-  description: Browse the market stalls
-  requirements: []
+  description: 
+  requirements:
+  - rid: 3170748026750500968
   effects: []
   move: {fileID: 0}
   strongHitText: 
@@ -26,10 +27,17 @@ MonoBehaviour:
   missText: 
   missEffects: []
   followUpActions:
-  - {fileID: 11400000, guid: 1b1d02bc2a892d147b133735cdd2f991, type: 2}
+  - {fileID: 11400000, guid: b85b5de8068769e488b4f0466afe5a96, type: 2}
+  - {fileID: 11400000, guid: d0f1b77183b1d504b80dba096b65fa57, type: 2}
   strongHitFollowUpActions: []
   weakHitFollowUpActions: []
   missFollowUpActions: []
   references:
     version: 2
-    RefIds: []
+    RefIds:
+    - rid: 3170748026750500968
+      type: {class: QuestCondition, ns: , asm: Assembly-CSharp}
+      data:
+        quest: {fileID: 11400000, guid: 0348f2e6613fe6c4e8cdca54b031cf34, type: 2}
+        condition: 1
+        stageIndex: 1
