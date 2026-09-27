@@ -12,5 +12,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 873a71c81618cd74d8eb1f93db69e792, type: 3}
   m_Name: InteractiveVisual
   m_EditorClassIdentifier: Assembly-CSharp::InteractiveVisualDefinition
-  visual: {fileID: 0}
-  hotspots: []
+  visual: {fileID: -8508598700636150562, guid: 65b51d244c757084b90b326cf5d5e924, type: 3}
+  hotspots:
+  - displayName: Market
+    location: {fileID: 11400000, guid: cd6e87729138ac74ca59ffd496e3ae03, type: 2}
+    points:
+    - {x: 0.7381703, y: 0.44479495}
+    - {x: 0.57833856, y: 0.38485807}
+    - {x: 0.60883284, y: 0.08359623}
+    - {x: 0.81913775, y: 0.09148264}
+    - {x: 0.89589906, y: 0.307571}
+    - {x: 0.8180862, y: 0.40378547}
+  - displayName: Apartment
+    location: {fileID: 11400000, guid: 87f6919c07d83d141bd05d784b42b8cf, type: 2}
+    points:
+    - {x: 0.38801262, y: 0.32649845}
+    - {x: 0.39852786, y: 0.38328075}
+    - {x: 0.3753943, y: 0.4148265}
+    - {x: 0.33648792, y: 0.42429024}
+    - {x: 0.29127234, y: 0.4006309}
+    - {x: 0.28286016, y: 0.340694}
+    - {x: 0.32176656, y: 0.307571}
+    - {x: 0.36382756, y: 0.307571}
+  - displayName: 
+    location: {fileID: 11400000, guid: f9353e7582e58854497a149e82d822b2, type: 2}
+    points:
+    - {x: 0.47739223, y: 0.5362776}
+    - {x: 0.3869611, y: 0.5094637}
+    - {x: 0.340694, y: 0.5031546}
+    - {x: 0.31335437, y: 0.5599369}
+    - {x: 0.31966352, y: 0.5930599}
+    - {x: 0.37960044, y: 0.6104101}
+    - {x: 0.4164038, y: 0.6324921}
+    - {x: 0.47949526, y: 0.6277603}
+    - {x: 0.5099895, y: 0.59936905}
+    - {x: 0.511041, y: 0.56940067}
+    - {x: 0.5068349, y: 0.55520505}
