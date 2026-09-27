@@ -1783,8 +1783,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 250, y: 0}
-  m_SizeDelta: {x: 600, y: 450}
+  m_AnchoredPosition: {x: 650, y: 0}
+  m_SizeDelta: {x: 600, y: 1000}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &471226827
 MonoBehaviour:
@@ -1802,6 +1802,16 @@ MonoBehaviour:
   contentContainer: {fileID: 1765167379}
   narrativeTextPrefab: {fileID: 5785544370353906631, guid: 41b9f219d91178443a1971f02aef5405, type: 3}
   scrollRect: {fileID: 729445322}
+  defaultTheme: {fileID: 0}
+  speakerNameText: {fileID: 0}
+  speakerPortraitImage: {fileID: 0}
+  themedBackgroundImages: []
+  themedPanelImages: []
+  themedPrimaryTexts: []
+  themedSecondaryTexts: []
+  defaultCharactersPerSecond: 45
+  defaultCommaPause: 0.08
+  defaultSentencePause: 0.18
   actionButtonPrefab: {fileID: -8936293028243171270, guid: 85f564da24c68d34d800994ae444b285, type: 3}
   gameState: {fileID: 0}
   moveResolver: {fileID: 1010165325}
@@ -2502,6 +2512,7 @@ MonoBehaviour:
   knownFlags: []
   knownResources:
   - {fileID: 11400000, guid: ccbb19576b30f1f4b9068b0277b4e994, type: 2}
+  knownQuests: []
   flagStates:
   - flag: {fileID: 11400000, guid: 3dd00dacaa501de4381607ed94be2bef, type: 2}
     value: 0
@@ -2510,6 +2521,7 @@ MonoBehaviour:
   - flag: {fileID: 11400000, guid: e3b1e86ef9b040044998907908d1519b, type: 2}
     value: 0
   resourceStates: []
+  questStates: []
 --- !u!1 &872995001
 GameObject:
   m_ObjectHideFlags: 0
@@ -3965,7 +3977,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -408.2, y: 317.3}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1677742359

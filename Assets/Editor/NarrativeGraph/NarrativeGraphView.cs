@@ -51,6 +51,18 @@ public class NarrativeGraphView : GraphView
     private const string MissEffectsProperty =
         "missEffects";
 
+    private const string SpeakerProperty =
+        "speaker";
+
+    private const string StrongHitSpeakerProperty =
+        "strongHitSpeaker";
+
+    private const string WeakHitSpeakerProperty =
+        "weakHitSpeaker";
+
+    private const string MissSpeakerProperty =
+        "missSpeaker";
+
     private LocationDefinition currentLocation;
     private GameUITheme currentTheme;
 
@@ -1422,6 +1434,12 @@ public class NarrativeGraphView : GraphView
             extensionContainer.Add(
                 approachLabel);
 
+            AddDivider();
+
+            BuildSpeakerField(
+                "Speaker",
+                SpeakerProperty);
+
             if (action.RequiresMove &&
                 action.Move != null)
             {
@@ -1431,6 +1449,34 @@ public class NarrativeGraphView : GraphView
 
                 extensionContainer.Add(
                     moveLabel);
+
+                Label resultSpeakersLabel =
+                    new Label(
+                        "MOVE RESULT SPEAKERS");
+
+                resultSpeakersLabel.style.unityFontStyleAndWeight =
+                    FontStyle.Bold;
+
+                resultSpeakersLabel.style.marginTop =
+                    6f;
+
+                resultSpeakersLabel.style.marginBottom =
+                    2f;
+
+                extensionContainer.Add(
+                    resultSpeakersLabel);
+
+                BuildSpeakerField(
+                    "Strong Hit",
+                    StrongHitSpeakerProperty);
+
+                BuildSpeakerField(
+                    "Weak Hit",
+                    WeakHitSpeakerProperty);
+
+                BuildSpeakerField(
+                    "Miss",
+                    MissSpeakerProperty);
 
                 StrongHitPort =
                     CreateOutputPort(
@@ -3412,6 +3458,79 @@ public class NarrativeGraphView : GraphView
                 3f;
 
             return label;
+        }
+
+        private void BuildSpeakerField(
+            string label,
+            string propertyName)
+        {
+            SerializedObject serializedAction =
+                new SerializedObject(
+                    Action);
+
+            serializedAction.Update();
+
+            SerializedProperty speakerProperty =
+                serializedAction.FindProperty(
+                    propertyName);
+
+            if (speakerProperty == null)
+            {
+                Debug.LogWarning(
+                    $"Narrative Graph could not find speaker property '{propertyName}' on '{Action.name}'.");
+
+                return;
+            }
+
+            ObjectField speakerField =
+                new ObjectField(
+                    label)
+                {
+                    objectType =
+                        typeof(CharacterDefinition),
+
+                    allowSceneObjects =
+                        false,
+
+                    value =
+                        speakerProperty.objectReferenceValue
+                };
+
+            speakerField.RegisterValueChangedCallback(
+                evt =>
+                {
+                    SerializedObject updatedAction =
+                        new SerializedObject(
+                            Action);
+
+                    updatedAction.Update();
+
+                    SerializedProperty updatedProperty =
+                        updatedAction.FindProperty(
+                            propertyName);
+
+                    if (updatedProperty == null)
+                    {
+                        return;
+                    }
+
+                    Undo.RecordObject(
+                        Action,
+                        "Change Narrative Speaker");
+
+                    updatedProperty.objectReferenceValue =
+                        evt.newValue;
+
+                    updatedAction.ApplyModifiedProperties();
+
+                    EditorUtility.SetDirty(
+                        Action);
+
+                    AssetDatabase.SaveAssets();
+                });
+
+            extensionContainer.Add(
+                speakerField);
         }
 
         private void AddDivider()

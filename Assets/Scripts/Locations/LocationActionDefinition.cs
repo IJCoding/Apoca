@@ -16,9 +16,13 @@ public class LocationActionDefinition : ScriptableObject
     private string displayName;
 
     [SerializeField]
-    private ActionApproach approach = ActionApproach.None;
+    private ActionApproach approach =
+        ActionApproach.None;
 
     [Header("Narrative")]
+
+    [SerializeField]
+    private CharacterDefinition speaker;
 
     [SerializeField]
     [TextArea(2, 8)]
@@ -48,12 +52,21 @@ public class LocationActionDefinition : ScriptableObject
     [Header("Move Result Text")]
 
     [SerializeField]
+    private CharacterDefinition strongHitSpeaker;
+
+    [SerializeField]
     [TextArea(2, 8)]
     private string strongHitText;
 
     [SerializeField]
+    private CharacterDefinition weakHitSpeaker;
+
+    [SerializeField]
     [TextArea(2, 8)]
     private string weakHitText;
+
+    [SerializeField]
+    private CharacterDefinition missSpeaker;
 
     [SerializeField]
     [TextArea(2, 8)]
@@ -94,28 +107,20 @@ public class LocationActionDefinition : ScriptableObject
     public string ActionId => actionId;
     public string DisplayName => displayName;
     public ActionApproach Approach => approach;
+    public CharacterDefinition Speaker => speaker;
     public string Description => description;
-
-    public bool HideWhenRequirementsNotMet =>
-        hideWhenRequirementsNotMet;
-
-    public IReadOnlyList<GameCondition> Requirements =>
-        requirements;
-
-    public IReadOnlyList<GameEffect> Effects =>
-        effects;
-
+    public bool HideWhenRequirementsNotMet => hideWhenRequirementsNotMet;
+    public IReadOnlyList<GameCondition> Requirements => requirements;
+    public IReadOnlyList<GameEffect> Effects => effects;
+    public IReadOnlyList<GameEffect> StrongHitEffects => strongHitEffects;
+    public IReadOnlyList<GameEffect> WeakHitEffects => weakHitEffects;
+    public IReadOnlyList<GameEffect> MissEffects => missEffects;
     public MoveDefinition Move => move;
-
-    public bool RequiresMove =>
-        move != null;
-
+    public bool RequiresMove => move != null;
     public string StrongHitText => strongHitText;
     public string WeakHitText => weakHitText;
     public string MissText => missText;
-
-    public LocationActionDefinition[] FollowUpActions =>
-        followUpActions;
+    public LocationActionDefinition[] FollowUpActions => followUpActions;
 
     public bool AreRequirementsMet(
         PlayerGameState gameState)
@@ -133,8 +138,7 @@ public class LocationActionDefinition : ScriptableObject
                 continue;
             }
 
-            if (!requirement.IsMet(
-                    gameState))
+            if (!requirement.IsMet(gameState))
             {
                 return false;
             }
@@ -158,21 +162,15 @@ public class LocationActionDefinition : ScriptableObject
         switch (result)
         {
             case MoveResult.StrongHit:
-                ApplyEffectList(
-                    strongHitEffects,
-                    gameState);
+                ApplyEffectList(strongHitEffects, gameState);
                 break;
 
             case MoveResult.WeakHit:
-                ApplyEffectList(
-                    weakHitEffects,
-                    gameState);
+                ApplyEffectList(weakHitEffects, gameState);
                 break;
 
             case MoveResult.Miss:
-                ApplyEffectList(
-                    missEffects,
-                    gameState);
+                ApplyEffectList(missEffects, gameState);
                 break;
         }
     }
@@ -193,6 +191,25 @@ public class LocationActionDefinition : ScriptableObject
 
             default:
                 return string.Empty;
+        }
+    }
+
+    public CharacterDefinition GetResultSpeaker(
+        MoveResult result)
+    {
+        switch (result)
+        {
+            case MoveResult.StrongHit:
+                return strongHitSpeaker;
+
+            case MoveResult.WeakHit:
+                return weakHitSpeaker;
+
+            case MoveResult.Miss:
+                return missSpeaker;
+
+            default:
+                return null;
         }
     }
 
@@ -231,8 +248,7 @@ public class LocationActionDefinition : ScriptableObject
                 continue;
             }
 
-            effect.Apply(
-                gameState);
+            effect.Apply(gameState);
         }
     }
 }

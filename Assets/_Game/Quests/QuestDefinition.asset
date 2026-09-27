@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1176f41304f2aa54f9d7ed478ae72671, type: 3}
-  m_Name: MissingMerchant
+  m_Name: QuestDefinition
   m_EditorClassIdentifier: Assembly-CSharp::QuestDefinition
-  questId: missing_merchant
-  displayName: The Missing Merchant
-  description: Find out what happened to the missing merchant.
+  questId: Find The merchant
+  displayName: Find The merchant
+  description: 
   stages:
-  - displayName: Ask Around
-    description: Learn where the merchant was last seen.
-  - displayName: Search for them
-    description: Who knows where they could be
-  - displayName: Find the Merchant
-    description: Discover what happened to them.
+  - displayName: Look around the market
+    description: 
+  - displayName: Get a clue
+    description: 
+  - displayName: Find them
+    description: 

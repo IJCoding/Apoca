@@ -28,6 +28,54 @@ public class LocationPanel : MonoBehaviour
     [Tooltip("The ScrollRect containing the narrative history.")]
     private ScrollRect scrollRect;
 
+    [Header("Speaker Presentation")]
+
+    [SerializeField]
+    [Tooltip("Theme used for narration and for characters without their own theme.")]
+    private GameUITheme defaultTheme;
+
+    [SerializeField]
+    [Tooltip("Optional speaker-name label. Hidden for narration.")]
+    private TMP_Text speakerNameText;
+
+    [SerializeField]
+    [Tooltip("Optional portrait image. Hidden for narration or speakers without a portrait.")]
+    private Image speakerPortraitImage;
+
+    [SerializeField]
+    [Tooltip("Images that should use the active theme's background colour.")]
+    private Image[] themedBackgroundImages =
+        Array.Empty<Image>();
+
+    [SerializeField]
+    [Tooltip("Images that should use the active theme's panel colour.")]
+    private Image[] themedPanelImages =
+        Array.Empty<Image>();
+
+    [SerializeField]
+    [Tooltip("Text elements that should use the active theme's primary text colour.")]
+    private TMP_Text[] themedPrimaryTexts =
+        Array.Empty<TMP_Text>();
+
+    [SerializeField]
+    [Tooltip("Text elements that should use the active theme's secondary text colour.")]
+    private TMP_Text[] themedSecondaryTexts =
+        Array.Empty<TMP_Text>();
+
+    [Header("Typewriter")]
+
+    [SerializeField]
+    [Min(1f)]
+    private float defaultCharactersPerSecond = 45f;
+
+    [SerializeField]
+    [Min(0f)]
+    private float defaultCommaPause = 0.18f;
+
+    [SerializeField]
+    [Min(0f)]
+    private float defaultSentencePause = 0.42f;
+
     [Header("Actions")]
 
     [SerializeField]
@@ -54,11 +102,16 @@ public class LocationPanel : MonoBehaviour
 
     private int selectedActionIndex = -1;
 
+    private Coroutine typewriterCoroutine;
+    private TMP_Text activeTypewriterText;
+    private string activeTypewriterFullText;
+    private bool isTypewriting;
+
     public event Action ActionsChanged;
     public event Action SelectionChanged;
 
     public bool HasActions =>
-        actionButtons.Count > 0;
+        HasVisibleActionButtons();
 
     public bool HasSelectedAction =>
         selectedActionIndex >= 0 &&
@@ -123,6 +176,9 @@ public class LocationPanel : MonoBehaviour
 
     private void OnDisable()
     {
+        StopTypewriter(
+            false);
+
         ClearGeneratedContent();
     }
 
@@ -150,8 +206,12 @@ public class LocationPanel : MonoBehaviour
 
         gameObject.SetActive(true);
 
+        ApplySpeakerPresentation(
+            null);
+
         AppendNarrative(
-            location.Description);
+            location.Description,
+            null);
 
         CreateActionButtons(
             location.Actions);
@@ -257,6 +317,12 @@ public class LocationPanel : MonoBehaviour
 
     public void ConfirmSelectedAction()
     {
+        if (isTypewriting)
+        {
+            CompleteCurrentTypewriter();
+            return;
+        }
+
         if (!HasSelectedAction)
         {
             return;
@@ -351,6 +417,7 @@ public class LocationPanel : MonoBehaviour
             actionButtons[index];
 
         return actionButton != null &&
+               actionButton.gameObject.activeInHierarchy &&
                actionButton.Action != null &&
                actionButton.IsAvailable;
     }
@@ -371,7 +438,8 @@ public class LocationPanel : MonoBehaviour
     }
 
     private NarrativeText AppendNarrative(
-        string text)
+        string text,
+        CharacterDefinition speaker = null)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -388,6 +456,12 @@ public class LocationPanel : MonoBehaviour
             return null;
         }
 
+        StopTypewriter(
+            true);
+
+        ApplySpeakerPresentation(
+            speaker);
+
         NarrativeText narrativeText =
             Instantiate(
                 narrativeTextPrefab,
@@ -399,7 +473,510 @@ public class LocationPanel : MonoBehaviour
         generatedContent.Add(
             narrativeText.gameObject);
 
+        TMP_Text textComponent =
+            narrativeText.GetComponentInChildren<TMP_Text>(
+                true);
+
+        if (textComponent != null)
+        {
+            GameUITheme theme =
+                GetThemeForSpeaker(
+                    speaker);
+
+            if (theme != null)
+            {
+                textComponent.color =
+                    theme.Narrative.PrimaryTextColor;
+            }
+
+            TypewriterSkipTarget skipTarget =
+                textComponent.GetComponent<TypewriterSkipTarget>();
+
+            if (skipTarget == null)
+            {
+                skipTarget =
+                    textComponent.gameObject.AddComponent<TypewriterSkipTarget>();
+            }
+
+            skipTarget.Clicked +=
+                CompleteCurrentTypewriter;
+
+            StartTypewriter(
+                textComponent,
+                text,
+                speaker);
+        }
+
         return narrativeText;
+    }
+
+    private void StartTypewriter(
+        TMP_Text textComponent,
+        string fullText,
+        CharacterDefinition speaker)
+    {
+        if (textComponent == null)
+        {
+            return;
+        }
+
+        activeTypewriterText =
+            textComponent;
+
+        activeTypewriterFullText =
+            fullText ?? string.Empty;
+
+        textComponent.text =
+            activeTypewriterFullText;
+
+        textComponent.maxVisibleCharacters =
+            0;
+
+        textComponent.ForceMeshUpdate();
+
+        isTypewriting =
+            true;
+
+        float charactersPerSecond =
+            speaker != null
+                ? speaker.CharactersPerSecond
+                : defaultCharactersPerSecond;
+
+        float commaPause =
+            speaker != null
+                ? speaker.CommaPause
+                : defaultCommaPause;
+
+        float sentencePause =
+            speaker != null
+                ? speaker.SentencePause
+                : defaultSentencePause;
+
+        typewriterCoroutine =
+            StartCoroutine(
+                TypewriterRoutine(
+                    textComponent,
+                    activeTypewriterFullText,
+                    charactersPerSecond,
+                    commaPause,
+                    sentencePause));
+    }
+
+    private IEnumerator TypewriterRoutine(
+        TMP_Text textComponent,
+        string fullText,
+        float charactersPerSecond,
+        float commaPause,
+        float sentencePause)
+    {
+        textComponent.ForceMeshUpdate();
+
+        int visibleCharacterCount =
+            textComponent.textInfo.characterCount;
+
+        float characterDelay =
+            1f / Mathf.Max(
+                1f,
+                charactersPerSecond);
+
+        for (int visibleCount = 1;
+             visibleCount <= visibleCharacterCount;
+             visibleCount++)
+        {
+            if (textComponent == null ||
+                textComponent != activeTypewriterText)
+            {
+                yield break;
+            }
+
+            textComponent.maxVisibleCharacters =
+                visibleCount;
+
+            KeepTypewriterTextInView(
+                textComponent,
+                visibleCount - 1);
+
+            char visibleCharacter =
+                GetVisibleCharacter(
+                    textComponent,
+                    fullText,
+                    visibleCount - 1);
+
+            float delay =
+                characterDelay;
+
+            if (visibleCharacter == ',' ||
+                visibleCharacter == ':' ||
+                visibleCharacter == ';')
+            {
+                delay +=
+                    commaPause;
+            }
+            else if (visibleCharacter == '.' ||
+                     visibleCharacter == '!' ||
+                     visibleCharacter == '?')
+            {
+                delay +=
+                    sentencePause;
+            }
+
+            if (delay > 0f)
+            {
+                yield return new WaitForSecondsRealtime(
+                    delay);
+            }
+            else
+            {
+                yield return null;
+            }
+        }
+
+        FinishTypewriterState(
+            textComponent);
+    }
+
+    private void KeepTypewriterTextInView(
+        TMP_Text textComponent,
+        int visibleCharacterIndex)
+    {
+        if (textComponent == null ||
+            scrollRect == null ||
+            contentContainer == null)
+        {
+            return;
+        }
+
+        RectTransform viewport =
+            scrollRect.viewport;
+
+        if (viewport == null)
+        {
+            return;
+        }
+
+        textComponent.ForceMeshUpdate();
+
+        TMP_TextInfo textInfo =
+            textComponent.textInfo;
+
+        if (textInfo == null ||
+            textInfo.characterCount == 0)
+        {
+            return;
+        }
+
+        int characterIndex =
+            Mathf.Clamp(
+                visibleCharacterIndex,
+                0,
+                textInfo.characterCount - 1);
+
+        while (characterIndex > 0 &&
+               !textInfo.characterInfo[characterIndex].isVisible)
+        {
+            characterIndex--;
+        }
+
+        TMP_CharacterInfo characterInfo =
+            textInfo.characterInfo[characterIndex];
+
+        Vector3 characterBottomWorld =
+            textComponent.transform.TransformPoint(
+                characterInfo.bottomLeft);
+
+        Vector3 characterBottomInViewport =
+            viewport.InverseTransformPoint(
+                characterBottomWorld);
+
+        /*
+         * Keep the active line comfortably above the bottom of the narrative
+         * viewport. The extra reserve means the text continues upward instead
+         * of visually running into the approach / previous / confirm / next
+         * controls that sit beneath the scroll area.
+         */
+        float bottomReserve =
+            Mathf.Min(
+                110f,
+                viewport.rect.height * 0.22f);
+
+        float visibleBottom =
+            viewport.rect.yMin +
+            bottomReserve;
+
+        if (characterBottomInViewport.y >=
+            visibleBottom)
+        {
+            return;
+        }
+
+        float overflow =
+            visibleBottom -
+            characterBottomInViewport.y;
+
+        RectTransform contentParent =
+            contentContainer.parent as RectTransform;
+
+        if (contentParent == null)
+        {
+            return;
+        }
+
+        Vector3 viewportStartWorld =
+            viewport.TransformPoint(
+                Vector3.zero);
+
+        Vector3 viewportEndWorld =
+            viewport.TransformPoint(
+                new Vector3(
+                    0f,
+                    overflow,
+                    0f));
+
+        Vector3 parentStart =
+            contentParent.InverseTransformPoint(
+                viewportStartWorld);
+
+        Vector3 parentEnd =
+            contentParent.InverseTransformPoint(
+                viewportEndWorld);
+
+        float localOverflow =
+            parentEnd.y -
+            parentStart.y;
+
+        Vector2 contentPosition =
+            contentContainer.anchoredPosition;
+
+        contentPosition.y +=
+            localOverflow;
+
+        contentContainer.anchoredPosition =
+            contentPosition;
+
+        scrollRect.StopMovement();
+    }
+
+    private char GetVisibleCharacter(
+        TMP_Text textComponent,
+        string fullText,
+        int visibleIndex)
+    {
+        if (textComponent == null ||
+            visibleIndex < 0 ||
+            visibleIndex >= textComponent.textInfo.characterCount)
+        {
+            return '\0';
+        }
+
+        TMP_CharacterInfo characterInfo =
+            textComponent.textInfo.characterInfo[visibleIndex];
+
+        int sourceIndex =
+            characterInfo.index;
+
+        if (sourceIndex < 0 ||
+            sourceIndex >= fullText.Length)
+        {
+            return '\0';
+        }
+
+        return fullText[sourceIndex];
+    }
+
+    public void CompleteCurrentTypewriter()
+    {
+        if (!isTypewriting)
+        {
+            return;
+        }
+
+        StopTypewriter(
+            true);
+    }
+
+    private void StopTypewriter(
+        bool revealAll)
+    {
+        if (typewriterCoroutine != null)
+        {
+            StopCoroutine(
+                typewriterCoroutine);
+
+            typewriterCoroutine =
+                null;
+        }
+
+        if (activeTypewriterText != null &&
+            revealAll)
+        {
+            activeTypewriterText.maxVisibleCharacters =
+                int.MaxValue;
+        }
+
+        activeTypewriterText =
+            null;
+
+        activeTypewriterFullText =
+            null;
+
+        bool wasTypewriting =
+            isTypewriting;
+
+        isTypewriting =
+            false;
+
+        if (revealAll &&
+            wasTypewriting)
+        {
+            RevealActionButtons();
+        }
+    }
+
+    private void FinishTypewriterState(
+        TMP_Text textComponent)
+    {
+        if (textComponent != null)
+        {
+            textComponent.maxVisibleCharacters =
+                int.MaxValue;
+        }
+
+        if (activeTypewriterText == textComponent)
+        {
+            activeTypewriterText =
+                null;
+
+            activeTypewriterFullText =
+                null;
+
+            typewriterCoroutine =
+                null;
+
+            isTypewriting =
+                false;
+
+            RevealActionButtons();
+        }
+    }
+
+    private void ApplySpeakerPresentation(
+        CharacterDefinition speaker)
+    {
+        GameUITheme theme =
+            GetThemeForSpeaker(
+                speaker);
+
+        if (speakerNameText != null)
+        {
+            bool hasSpeaker =
+                speaker != null &&
+                !string.IsNullOrWhiteSpace(
+                    speaker.DisplayName);
+
+            speakerNameText.gameObject.SetActive(
+                hasSpeaker);
+
+            if (hasSpeaker)
+            {
+                speakerNameText.text =
+                    speaker.DisplayName;
+            }
+        }
+
+        if (speakerPortraitImage != null)
+        {
+            bool hasPortrait =
+                speaker != null &&
+                speaker.Portrait != null;
+
+            speakerPortraitImage.gameObject.SetActive(
+                hasPortrait);
+
+            speakerPortraitImage.sprite =
+                hasPortrait
+                    ? speaker.Portrait
+                    : null;
+        }
+
+        if (theme == null)
+        {
+            return;
+        }
+
+        GameUITheme.NarrativePalette palette =
+            theme.Narrative;
+
+        ApplyImageColour(
+            themedBackgroundImages,
+            palette.BackgroundColor);
+
+        ApplyImageColour(
+            themedPanelImages,
+            palette.PanelColor);
+
+        ApplyTextColour(
+            themedPrimaryTexts,
+            palette.PrimaryTextColor);
+
+        ApplyTextColour(
+            themedSecondaryTexts,
+            palette.SecondaryTextColor);
+
+        if (speakerNameText != null)
+        {
+            speakerNameText.color =
+                palette.AccentColor;
+        }
+    }
+
+    private GameUITheme GetThemeForSpeaker(
+        CharacterDefinition speaker)
+    {
+        if (speaker != null &&
+            speaker.Theme != null)
+        {
+            return speaker.Theme;
+        }
+
+        return defaultTheme;
+    }
+
+    private void ApplyImageColour(
+        Image[] images,
+        Color colour)
+    {
+        if (images == null)
+        {
+            return;
+        }
+
+        foreach (Image image in images)
+        {
+            if (image != null)
+            {
+                image.color =
+                    colour;
+            }
+        }
+    }
+
+    private void ApplyTextColour(
+        TMP_Text[] texts,
+        Color colour)
+    {
+        if (texts == null)
+        {
+            return;
+        }
+
+        foreach (TMP_Text textElement in texts)
+        {
+            if (textElement != null)
+            {
+                textElement.color =
+                    colour;
+            }
+        }
     }
 
     private NarrativeText AppendChoiceHistory(
@@ -464,6 +1041,9 @@ public class LocationPanel : MonoBehaviour
                 actionButton.Selected +=
                     HandleActionSelected;
 
+                actionButton.gameObject.SetActive(
+                    !isTypewriting);
+
                 actionButtons.Add(
                     actionButton);
 
@@ -474,6 +1054,51 @@ public class LocationPanel : MonoBehaviour
 
         ActionsChanged?.Invoke();
         SelectionChanged?.Invoke();
+    }
+
+    private void RevealActionButtons()
+    {
+        EnsureGameState();
+
+        foreach (LocationActionButton actionButton in actionButtons)
+        {
+            if (actionButton == null ||
+                actionButton.Action == null)
+            {
+                continue;
+            }
+
+            bool isAvailable =
+                actionButton.Action.AreRequirementsMet(
+                    gameState);
+
+            bool shouldBeVisible =
+                isAvailable ||
+                !actionButton.Action.HideWhenRequirementsNotMet;
+
+            actionButton.SetAvailable(
+                isAvailable);
+
+            actionButton.gameObject.SetActive(
+                shouldBeVisible);
+        }
+
+        ActionsChanged?.Invoke();
+        SelectionChanged?.Invoke();
+    }
+
+    private bool HasVisibleActionButtons()
+    {
+        foreach (LocationActionButton actionButton in actionButtons)
+        {
+            if (actionButton != null &&
+                actionButton.gameObject.activeInHierarchy)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void SelectActionAtIndex(
@@ -514,6 +1139,12 @@ public class LocationPanel : MonoBehaviour
     {
         if (action == null)
         {
+            return;
+        }
+
+        if (isTypewriting)
+        {
+            CompleteCurrentTypewriter();
             return;
         }
 
@@ -568,7 +1199,8 @@ public class LocationPanel : MonoBehaviour
         LocationActionDefinition action)
     {
         AppendNarrative(
-            action.Description);
+            action.Description,
+            action.Speaker);
 
         CreateActionButtons(
             action.FollowUpActions);
@@ -610,6 +1242,8 @@ public class LocationPanel : MonoBehaviour
 
         AppendNarrative(
             action.GetResultText(
+                resolution.Result),
+            action.GetResultSpeaker(
                 resolution.Result));
 
         CreateActionButtons(
